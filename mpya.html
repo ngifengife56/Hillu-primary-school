@@ -1,0 +1,7475 @@
+<!DOCTYPE html>
+<html lang="sw">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>HILLU Primary School Management System</title>
+
+<!-- =========================================================
+SUPABASE
+Badilisha URL na ANON KEY zako za Supabase hapa chini.
+Usiweke service_role key kwenye HTML.
+========================================================= -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+<style>
+*{
+    box-sizing:border-box;
+    margin:0;
+    padding:0;
+    font-family:Arial,Helvetica,sans-serif;
+}
+
+body{
+    background:#eef3f7;
+    color:#222;
+}
+
+/* =========================================================
+LOGIN
+========================================================= */
+
+#loginScreen{
+    position:fixed;
+    inset:0;
+    z-index:99999;
+    background:linear-gradient(135deg,#063b66,#1493d1);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+}
+
+.login-box{
+    width:420px;
+    max-width:100%;
+    background:#fff;
+    padding:32px;
+    border-radius:16px;
+    box-shadow:0 12px 40px #0005;
+}
+
+.login-box h1{
+    color:#063b66;
+    text-align:center;
+    margin-bottom:6px;
+}
+
+.login-box p{
+    text-align:center;
+    color:#777;
+    margin-bottom:22px;
+}
+
+.login-box .form-group{
+    margin-bottom:14px;
+}
+
+.login-error{
+    display:none;
+    background:#fdecea;
+    color:#c0392b;
+    padding:10px;
+    border-radius:7px;
+    margin-bottom:14px;
+    text-align:center;
+    font-size:13px;
+    font-weight:bold;
+}
+
+.login-help{
+    margin-top:15px;
+    padding:10px;
+    background:#f4f8fb;
+    border-radius:7px;
+    font-size:12px;
+    color:#555;
+}
+
+#appShell{
+    display:none;
+}
+
+body.logged-in #loginScreen{
+    display:none;
+}
+
+body.logged-in #appShell{
+    display:block;
+}
+
+.viewer .admin-only{
+    display:none !important;
+}
+
+/* =========================================================
+SIDEBAR
+========================================================= */
+
+.sidebar{
+    position:fixed;
+    left:0;
+    top:0;
+    width:255px;
+    height:100vh;
+    background:linear-gradient(180deg,#063b66,#075b87,#063b66);
+    color:white;
+    padding:15px 10px;
+    overflow-y:auto;
+    z-index:1000;
+}
+
+.logo{
+    text-align:center;
+    padding:12px 5px 20px;
+    border-bottom:1px solid #ffffff35;
+    margin-bottom:12px;
+}
+
+.logo h2{
+    font-size:21px;
+}
+
+.logo p{
+    font-size:11px;
+    margin-top:5px;
+}
+
+.menu{
+    list-style:none;
+}
+
+.menu li{
+    margin:4px 0;
+}
+
+.menu button{
+    width:100%;
+    border:0;
+    background:transparent;
+    color:white;
+    padding:12px;
+    text-align:left;
+    border-radius:7px;
+    cursor:pointer;
+    font-size:14px;
+}
+
+.menu button:hover,
+.menu button.active{
+    background:#1493d1;
+}
+
+/* =========================================================
+MAIN
+========================================================= */
+
+.main{
+    margin-left:255px;
+    min-height:100vh;
+}
+
+.topbar{
+    height:68px;
+    background:white;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:0 25px;
+    box-shadow:0 2px 10px #00000012;
+    position:sticky;
+    top:0;
+    z-index:500;
+}
+
+.topbar h2{
+    color:#063b66;
+}
+
+.user{
+    background:#063b66;
+    color:white;
+    padding:9px 15px;
+    border-radius:20px;
+    font-size:13px;
+}
+
+.role-viewer{
+    background:#218c52 !important;
+}
+
+/* =========================================================
+MARQUEE
+========================================================= */
+
+.marquee-box{
+    background:#063b66;
+    color:white;
+    padding:9px;
+    font-weight:bold;
+    overflow:hidden;
+    border-bottom:3px solid #1493d1;
+}
+
+.marquee-box marquee{
+    font-size:14px;
+}
+
+.dashboard-marquee{
+    background:#1493d1;
+    color:white;
+    padding:13px 10px;
+    border-radius:9px;
+    margin-bottom:20px;
+    overflow:hidden;
+    font-weight:bold;
+    box-shadow:0 3px 10px #0002;
+}
+
+.dashboard-marquee marquee{
+    font-size:15px;
+}
+
+/* =========================================================
+CONTENT
+========================================================= */
+
+.content{
+    padding:22px;
+}
+
+.page{
+    display:none;
+}
+
+.page.active{
+    display:block;
+}
+
+.hero{
+    background:linear-gradient(135deg,#063b66,#1493d1);
+    color:white;
+    padding:30px;
+    border-radius:14px;
+    margin-bottom:20px;
+}
+
+.hero h1{
+    margin-bottom:8px;
+}
+
+.news-banner{
+    background:#b90000;
+    color:white;
+    padding:13px;
+    border-radius:8px;
+    margin-bottom:20px;
+    animation:blinkNews 1s infinite;
+    cursor:pointer;
+}
+
+@keyframes blinkNews{
+    0%,100%{opacity:1}
+    50%{opacity:.45}
+}
+
+/* =========================================================
+DASHBOARD IMAGES
+========================================================= */
+
+.dashboard-images{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:18px;
+    margin:20px 0;
+}
+
+.dashboard-image{
+    height:220px;
+    border-radius:14px;
+    overflow:hidden;
+    position:relative;
+    box-shadow:0 4px 15px #0002;
+}
+
+.dashboard-image img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+}
+
+.dashboard-image div{
+    position:absolute;
+    bottom:0;
+    left:0;
+    right:0;
+    padding:15px;
+    color:white;
+    background:linear-gradient(transparent,#000c);
+    font-weight:bold;
+}
+
+/* =========================================================
+CARDS
+========================================================= */
+
+.cards{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+    gap:17px;
+}
+
+.card{
+    background:white;
+    padding:20px;
+    border-radius:12px;
+    box-shadow:0 3px 10px #0000000c;
+    border-left:5px solid #1493d1;
+}
+
+.card h3{
+    font-size:13px;
+    color:#777;
+    margin-bottom:10px;
+}
+
+.card strong{
+    font-size:27px;
+    color:#063b66;
+}
+
+.panel{
+    background:white;
+    padding:20px;
+    border-radius:12px;
+    margin-top:20px;
+    box-shadow:0 3px 10px #0000000c;
+}
+
+.panel-title{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:10px;
+    margin-bottom:15px;
+    flex-wrap:wrap;
+}
+
+.panel-title h3{
+    color:#063b66;
+}
+
+/* =========================================================
+BUTTONS
+========================================================= */
+
+.btn{
+    border:0;
+    background:#1493d1;
+    color:white;
+    padding:10px 15px;
+    border-radius:6px;
+    cursor:pointer;
+    font-weight:bold;
+}
+
+.btn:hover{
+    opacity:.85;
+}
+
+.btn-success{
+    background:#218c52;
+}
+
+.btn-danger{
+    background:#c0392b;
+}
+
+.btn-warning{
+    background:#d68910;
+}
+
+.btn-dark{
+    background:#063b66;
+}
+
+.btn-purple{
+    background:#6c3483;
+}
+
+.btn-small{
+    padding:6px 9px;
+    font-size:11px;
+}
+
+/* =========================================================
+FORMS
+========================================================= */
+
+.form-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(190px,1fr));
+    gap:15px;
+}
+
+.form-group{
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+}
+
+label{
+    font-size:13px;
+    font-weight:bold;
+    color:#555;
+}
+
+input,
+select,
+textarea{
+    width:100%;
+    padding:10px;
+    border:1px solid #ccc;
+    border-radius:6px;
+    outline:none;
+}
+
+input:focus,
+select:focus,
+textarea:focus{
+    border-color:#1493d1;
+}
+
+.form-actions{
+    margin-top:20px;
+    display:flex;
+    gap:10px;
+    justify-content:flex-end;
+}
+
+/* =========================================================
+TABLES
+========================================================= */
+
+.table-wrap{
+    overflow-x:auto;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+    margin-top:10px;
+}
+
+th,
+td{
+    padding:10px 8px;
+    border-bottom:1px solid #eee;
+    font-size:13px;
+    text-align:center;
+}
+
+th{
+    background:#063b66;
+    color:white;
+}
+
+tr:hover{
+    background:#f5f9fc;
+}
+
+.badge{
+    display:inline-block;
+    padding:5px 9px;
+    border-radius:12px;
+    background:#e8f5ec;
+    color:#218c52;
+    font-weight:bold;
+}
+
+.grade-A{
+    color:#218c52;
+    font-weight:bold;
+}
+
+.grade-B{
+    color:#2980b9;
+    font-weight:bold;
+}
+
+.grade-C{
+    color:#d68910;
+    font-weight:bold;
+}
+
+.grade-D{
+    color:#d35400;
+    font-weight:bold;
+}
+
+.grade-E{
+    color:#c0392b;
+    font-weight:bold;
+}
+
+.position{
+    font-weight:bold;
+    color:#063b66;
+}
+
+.notice{
+    padding:15px;
+    background:#fff7df;
+    border-left:5px solid #d68910;
+    border-radius:6px;
+}
+
+.result-controls{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+    gap:12px;
+    align-items:end;
+}
+
+/* =========================================================
+MODAL
+========================================================= */
+
+.modal{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:#00000099;
+    z-index:2000;
+    align-items:center;
+    justify-content:center;
+    padding:15px;
+}
+
+.modal.show{
+    display:flex;
+}
+
+.modal-box{
+    background:white;
+    width:850px;
+    max-width:100%;
+    max-height:92vh;
+    overflow-y:auto;
+    padding:25px;
+    border-radius:13px;
+}
+
+.modal-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:20px;
+}
+
+.close{
+    background:#c0392b;
+    color:white;
+    border:0;
+    padding:7px 11px;
+    border-radius:5px;
+    cursor:pointer;
+}
+
+.result-news-card{
+    background:white;
+    border-left:5px solid #c0392b;
+    padding:18px;
+    border-radius:8px;
+    margin-bottom:12px;
+    box-shadow:0 2px 8px #0001;
+}
+
+.result-news-card h3{
+    color:#063b66;
+}
+
+.result-news-card p{
+    margin:7px 0;
+}
+
+.footer{
+    text-align:center;
+    padding:30px;
+    color:#777;
+    font-size:12px;
+}
+
+/* =========================================================
+SUPABASE STATUS
+========================================================= */
+
+.cloud-status{
+    display:inline-flex;
+    align-items:center;
+    gap:7px;
+    padding:6px 10px;
+    border-radius:15px;
+    font-size:11px;
+    background:#eee;
+    color:#555;
+}
+
+.cloud-status.online{
+    background:#e8f5ec;
+    color:#218c52;
+}
+
+.cloud-status.offline{
+    background:#fdecea;
+    color:#c0392b;
+}
+
+/* =========================================================
+RESPONSIVE
+========================================================= */
+
+@media(max-width:900px){
+
+    .sidebar{
+        width:70px;
+    }
+
+    .logo h2{
+        font-size:10px;
+    }
+
+    .logo p{
+        display:none;
+    }
+
+    .menu button{
+        font-size:0;
+        text-align:center;
+    }
+
+    .menu button:first-letter{
+        font-size:20px;
+    }
+
+    .main{
+        margin-left:70px;
+    }
+
+    .dashboard-images{
+        grid-template-columns:1fr;
+    }
+}
+
+@media(max-width:600px){
+
+    .topbar{
+        padding:0 10px;
+    }
+
+    .topbar h2{
+        font-size:15px;
+    }
+
+    .user{
+        font-size:10px;
+    }
+
+    .content{
+        padding:12px;
+    }
+
+    th,
+    td{
+        white-space:nowrap;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<!-- =========================================================
+LOGIN SCREEN
+LOGIN DETAILS ZIMEFICHWA NDANI YA JAVASCRIPT/COMMENTS.
+Credentials:
+ADMIN  = admin / HILLU2026
+VIEWER = viewer / viewer123
+========================================================= -->
+
+<div id="loginScreen">
+
+    <div class="login-box">
+
+        <h1>HILLU PRIMARY SCHOOL</h1>
+
+        <p>School Management System</p>
+
+        <div id="loginError" class="login-error">
+            Username au password si sahihi.
+        </div>
+
+        <form onsubmit="login(event)">
+
+            <div class="form-group">
+
+                <label>Username</label>
+
+                <input
+                    type="text"
+                    id="loginUsername"
+                    autocomplete="username"
+                    required
+                >
+
+            </div>
+
+            <div class="form-group">
+
+                <label>Password</label>
+
+                <input
+                    type="password"
+                    id="loginPassword"
+                    autocomplete="current-password"
+                    required
+                >
+
+            </div>
+
+            <button
+                type="submit"
+                class="btn btn-success"
+                style="width:100%;margin-top:8px;"
+            >
+                🔐 Ingia kwenye Mfumo
+            </button>
+
+        </form>
+
+        <div class="login-help">
+
+            <b>Viewer:</b>
+            Anaweza kuona na kuchapisha taarifa tu.
+
+            <br><br>
+
+            <b>Admin:</b>
+            Anaweza kuongeza, kubadilisha, kufuta,
+            kutangaza na kusimamia taarifa.
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- =========================================================
+APP
+========================================================= -->
+
+<div id="appShell">
+
+<!-- =========================================================
+SIDEBAR
+========================================================= -->
+
+<aside class="sidebar">
+
+    <div class="logo">
+
+        <h2>HILLU PRIMARY</h2>
+
+        <p>SCHOOL MANAGEMENT SYSTEM</p>
+
+        <p><b>KAZI NA SARA</b></p>
+
+    </div>
+
+    <ul class="menu">
+
+        <li>
+            <button
+                class="active"
+                onclick="showPage('dashboard',this)"
+            >
+                🏠 Dashboard
+            </button>
+        </li>
+
+        <li>
+            <button onclick="showPage('students',this)">
+                👨‍🎓 Wanafunzi
+            </button>
+        </li>
+
+        <li>
+            <button onclick="showPage('results',this)">
+                📊 Matokeo
+            </button>
+        </li>
+
+        <li>
+            <button onclick="showPage('subjects',this)">
+                📚 Masomo
+            </button>
+        </li>
+
+        <li>
+            <button onclick="showPage('teachers',this)">
+                👨‍🏫 Walimu
+            </button>
+        </li>
+
+        <li>
+            <button onclick="showPage('finance',this)">
+                💰 Fedha
+            </button>
+        </li>
+
+        <li>
+            <button onclick="showPage('attendance',this)">
+                📅 Mahudhurio
+            </button>
+        </li>
+
+        <li>
+            <button onclick="showPage('values',this)">
+                ⭐ Thamani & Miundombinu
+            </button>
+        </li>
+
+        <li>
+            <button onclick="showPage('news',this)">
+                📰 News
+            </button>
+        </li>
+
+        <li>
+            <button onclick="showPage('reports',this)">
+                📑 Ripoti
+            </button>
+        </li>
+
+    </ul>
+
+</aside>
+
+<!-- =========================================================
+MAIN
+========================================================= -->
+
+<main class="main">
+
+<header class="topbar">
+
+    <h2>HILLU Primary School</h2>
+
+    <div
+        class="user"
+        id="loggedUser"
+    >
+        👤 Administrator
+    </div>
+
+</header>
+
+<!-- =========================================================
+TOP MARQUEE
+========================================================= -->
+
+<div class="marquee-box">
+
+    <marquee
+        behavior="scroll"
+        direction="left"
+        scrollamount="7"
+        onmouseover="this.stop()"
+        onmouseout="this.start()"
+    >
+
+        📢 HILLU PRIMARY SCHOOL —
+        KAZI NA SARA —
+        ELIMU • BIDII • HESHIMA • UWAJIBIKAJI • UBORA • USHIRIKIANO —
+        KARIBU KWENYE MFUMO WA USIMAMIZI WA SHULE —
+        WANAFUNZI • WALIMU • MATOKEO • MASOMO • FEDHA • MAHUDHURIO • MIUNDOMBINU • NEWS • RIPOTI
+
+    </marquee>
+
+</div>
+
+<div class="content">
+
+<!-- =========================================================
+DASHBOARD
+========================================================= -->
+
+<section id="dashboard" class="page active">
+
+    <div class="hero">
+
+        <h1>Karibu HILLU Primary School</h1>
+
+        <p>
+            Mfumo wa Takwimu na Usimamizi wa Shule ya Msingi HILLU.
+            Simamia taarifa za wanafunzi, walimu, masomo, matokeo,
+            fedha, mahudhurio, miundombinu na matangazo ya shule.
+        </p>
+
+    </div>
+
+    <!-- DASHBOARD MARQUEE -->
+
+    <div class="dashboard-marquee">
+
+        <marquee
+            behavior="scroll"
+            direction="left"
+            scrollamount="6"
+            onmouseover="this.stop()"
+            onmouseout="this.start()"
+        >
+
+            ⭐ KAZI NA SARA ⭐
+            HILLU PRIMARY SCHOOL —
+            ELIMU BORA • BIDII • HESHIMA • UWAJIBIKAJI •
+            USHIRIKIANO • UBORA • MAENDELEO YA SHULE —
+            TAARIFA ZOTE ZINAHIFADHIWA KWENYE MFUMO —
+            ADMIN ANA RUHUSA YA KUHARIRI TAARIFA —
+            VIEWER ANA RUHUSA YA KUANGALIA NA KUCHAPISHA TU
+
+        </marquee>
+
+    </div>
+
+    <div id="dashboardNews"></div>
+
+    <div class="dashboard-images">
+
+        <div class="dashboard-image">
+
+            <img src="https://images.unsplash.com/photo-1598301257982-0cf014dabbcd?auto=format&fit=crop&w=900&q=80">
+
+            <div>🌾 MAZAO NA KILIMO</div>
+
+        </div>
+
+        <div class="dashboard-image">
+
+            <img src="https://images.unsplash.com/photo-1597848212624-e19a7b6c6c95?auto=format&fit=crop&w=900&q=80">
+
+            <div>🌱 PAMBA NA MAZAO</div>
+
+        </div>
+
+        <div class="dashboard-image">
+
+            <img src="https://images.unsplash.com/photo-1521587760476-6c12a4b040da?auto=format&fit=crop&w=900&q=80">
+
+            <div>📚 VITABU NA ELIMU</div>
+
+        </div>
+
+    </div>
+
+    <div class="cards">
+
+        <div class="card">
+            <h3>WANAFUNZI</h3>
+            <strong id="dashStudents">0</strong>
+        </div>
+
+        <div class="card">
+            <h3>WALIMU</h3>
+            <strong id="dashTeachers">0</strong>
+        </div>
+
+        <div class="card">
+            <h3>MAPATO</h3>
+            <strong id="dashIncome">Tsh 0</strong>
+        </div>
+
+        <div class="card">
+            <h3>MATUMIZI</h3>
+            <strong id="dashExpense">Tsh 0</strong>
+        </div>
+
+        <div class="card">
+            <h3>BENKI</h3>
+            <strong id="dashBank">Tsh 0</strong>
+        </div>
+
+        <div class="card">
+            <h3>SALIO</h3>
+            <strong id="dashBalance">Tsh 0</strong>
+        </div>
+
+    </div>
+
+    <div class="panel">
+
+        <div class="panel-title">
+
+            <h3>📢 Taarifa Mpya</h3>
+
+            <span
+                id="cloudStatus"
+                class="cloud-status offline"
+            >
+                ☁️ Local Storage
+            </span>
+
+        </div>
+
+        <div id="latestNews"></div>
+
+    </div>
+
+</section>
+
+<!-- =========================================================
+STUDENTS
+========================================================= -->
+
+<section id="students" class="page">
+
+<div class="hero">
+
+<h1>👨‍🎓 Takwimu za Wanafunzi</h1>
+
+<p>
+Hapa tunaingiza idadi ya wanafunzi kwa jinsia na darasa.
+</p>
+
+</div>
+
+<div class="panel">
+
+<div class="panel-title">
+
+<h3>Idadi ya Wanafunzi kwa Darasa</h3>
+
+<button
+class="btn admin-only"
+onclick="openModal('studentCountModal')"
+>
+➕ Weka Takwimu
+</button>
+
+</div>
+
+<div class="table-wrap">
+
+<table>
+
+<thead>
+
+<tr>
+<th>Darasa</th>
+<th>Me</th>
+<th>Ke</th>
+<th>Jumla</th>
+</tr>
+
+</thead>
+
+<tbody id="studentClassTable"></tbody>
+
+</table>
+
+</div>
+
+</div>
+
+<div class="panel">
+
+<div class="panel-title">
+
+<h3>♿ Wanafunzi wenye Mahitaji Maalumu</h3>
+
+<button
+class="btn btn-purple admin-only"
+onclick="openModal('specialNeedModal')"
+>
+➕ Ongeza Takwimu
+</button>
+
+</div>
+
+<div class="table-wrap">
+
+<table>
+
+<thead>
+
+<tr>
+<th>Darasa</th>
+<th>Aina ya Hitaji</th>
+<th>Me</th>
+<th>Ke</th>
+<th>Jumla</th>
+<th>Kitendo</th>
+</tr>
+
+</thead>
+
+<tbody id="specialNeedTable"></tbody>
+
+</table>
+
+</div>
+
+</div>
+
+</section>
+
+<!-- =========================================================
+RESULTS
+========================================================= -->
+
+<section id="results" class="page">
+
+<div class="hero">
+
+<h1>📊 Usimamizi wa Matokeo</h1>
+
+<p>
+Ingiza matokeo kwa Excel au kupitia mfumo.
+Wastani utahesabiwa moja kwa moja na Grade itatokana na wastani huo.
+</p>
+
+</div>
+
+<div class="panel">
+
+<div class="panel-title">
+
+<h3>📥 Excel ya Matokeo</h3>
+
+<div>
+
+<button
+class="btn btn-success"
+onclick="downloadResultTemplate()"
+>
+⬇️ Download Excel Template
+</button>
+
+<button
+class="btn btn-warning admin-only"
+onclick="document.getElementById('excelUpload').click()"
+>
+⬆️ Upload Excel
+</button>
+
+<input
+type="file"
+id="excelUpload"
+accept=".xlsx,.xls,.csv"
+style="display:none"
+onchange="uploadResultsExcel(event)"
+>
+
+</div>
+
+</div>
+
+<div class="result-controls">
+
+<div class="form-group">
+
+<label>Chagua Darasa</label>
+
+<select
+id="resultClassSelect"
+onchange="buildResultTemplate();renderResultRecords();"
+>
+
+<option value="">-- Chagua Darasa --</option>
+<option>Awali</option>
+<option>I</option>
+<option>II</option>
+<option>III</option>
+<option>IV</option>
+<option>V</option>
+<option>VI</option>
+<option>VII</option>
+
+</select>
+
+</div>
+
+</div>
+
+<div id="resultTemplateArea">
+
+<p style="margin-top:20px;color:#777">
+Chagua darasa ili template ya matokeo ionyeshe masomo yaliyosajiliwa.
+</p>
+
+</div>
+
+</div>
+
+<div class="panel">
+
+<div class="panel-title">
+
+<h3>📋 Matokeo ya Darasa</h3>
+
+<button
+class="btn btn-danger admin-only"
+onclick="deleteAllClassResults()"
+>
+🗑️ Futa Wote wa Darasa
+</button>
+
+</div>
+
+<div class="form-grid">
+
+<div class="form-group">
+
+<label>Darasa la Kuangalia</label>
+
+<select
+id="resultViewClass"
+onchange="renderResultRecords()"
+>
+
+<option value="">-- Chagua Darasa --</option>
+<option>Awali</option>
+<option>I</option>
+<option>II</option>
+<option>III</option>
+<option>IV</option>
+<option>V</option>
+<option>VI</option>
+<option>VII</option>
+
+</select>
+
+</div>
+
+</div>
+
+<div id="resultSummary" style="margin-top:15px;"></div>
+
+<div class="table-wrap">
+
+<table>
+
+<thead id="resultRecordsHead"></thead>
+
+<tbody id="resultRecordsBody"></tbody>
+
+</table>
+
+</div>
+
+</div>
+
+<div class="panel">
+
+<div class="panel-title">
+
+<h3>📈 Tathmini ya Matokeo — Darasa IV na VII</h3>
+
+<button
+class="btn btn-purple admin-only"
+onclick="openModal('assessmentModal')"
+>
+➕ Andika Tathmini
+</button>
+
+</div>
+
+<div class="form-grid">
+
+<div class="form-group">
+
+<label>Mwaka</label>
+
+<select
+id="assessmentYear"
+onchange="renderAssessments()"
+></select>
+
+</div>
+
+<div class="form-group">
+
+<label>Darasa</label>
+
+<select
+id="assessmentClass"
+onchange="renderAssessments()"
+>
+
+<option>IV</option>
+<option>VII</option>
+
+</select>
+
+</div>
+
+</div>
+
+<div class="table-wrap">
+
+<table>
+
+<thead>
+
+<tr>
+<th>Jinsia</th>
+<th>A</th>
+<th>B</th>
+<th>C</th>
+<th>D</th>
+<th>E</th>
+<th>Jumla</th>
+</tr>
+
+</thead>
+
+<tbody id="assessmentTable"></tbody>
+
+</table>
+
+</div>
+
+</div>
+
+<div class="panel">
+
+<div class="panel-title">
+
+<h3>📢 Kutangaza Matokeo</h3>
+
+<button
+class="btn btn-danger admin-only"
+onclick="openModal('publishResultModal')"
+>
+📢 Tangaza Matokeo
+</button>
+
+</div>
+
+<div class="table-wrap">
+
+<table>
+
+<thead>
+
+<tr>
+<th>Darasa</th>
+<th>Mwaka</th>
+<th>Tarehe</th>
+<th>Hali</th>
+<th>Kitendo</th>
+</tr>
+
+</thead>
+
+<tbody id="publishedResultsTable"></tbody>
+
+</table>
+
+</div>
+
+</div>
+
+</section>
+
+<!-- =========================================================
+SUBJECTS
+========================================================= -->
+
+<section id="subjects" class="page">
+
+<div class="hero">
+
+<h1>📚 Usajili wa Masomo kwa Kila Darasa</h1>
+
+<p>
+Masomo yaliyowekwa hapa ndiyo yatakayotokea kwenye template ya matokeo.
+</p>
+
+</div>
+
+<div class="panel">
+
+<div class="panel-title">
+
+<h3>Masomo ya Darasa</h3>
+
+<button
+class="btn btn-success admin-only"
+onclick="openModal('subjectModal')"
+>
+➕ Ongeza Somo
+</button>
+
+</div>
+
+<div class="form-grid">
+
+<div class="form-group">
+
+<label>Chagua Darasa</label>
+
+<select
+id="subjectClassFilter"
+onchange="renderSubjects()"
+>
+
+<option value="">-- Madarasa Yote --</option>
+<option>Awali</option>
+<option>I</option>
+<option>II</option>
+<option>III</option>
+<option>IV</option>
+<option>V</option>
+<option>VI</option>
+<option>VII</option>
+
+</select>
+
+</div>
+
+</div>
+
+<div class="table-wrap">
+
+<table>
+
+<thead>
+
+<tr>
+<th>Darasa</th>
+<th>Somo</th>
+<th>Kitendo</th>
+</tr>
+
+</thead>
+
+<tbody id="subjectTable"></tbody>
+
+</table>
+
+</div>
+
+</div>
+
+</section>
+
+<!-- =========================================================
+TEACHERS
+========================================================= -->
+
+<section id="teachers" class="page">
+
+<div class="hero">
+
+<h1>👨‍🏫 Takwimu za Walimu</h1>
+
+<p>
+Mfumo unaonyesha idadi ya walimu kwa jinsia.
+</p>
+
+</div>
+
+<div class="cards">
+
+<div class="card">
+<h3>WALIMU ME</h3>
+<strong id="teacherMale">0</strong>
+</div>
+
+<div class="card">
+<h3>WALIMU KE</h3>
+<strong id="teacherFemale">0</strong>
+</div>
+
+<div class="card">
+<h3>JUMLA</h3>
+<strong id="teacherTotal">0</strong>
+</div>
+
+</div>
+
+<div class="panel">
+
+<div class="panel-title">
+
+<h3>Idadi ya Walimu</h3>
+
+<button
+class="btn admin-only"
+onclick="openModal('teacherCountModal')"
+>
+➕ Weka Takwimu
+</button>
+
+</div>
+
+<table>
+
+<thead>
+
+<tr>
+<th>Me</th>
+<th>Ke</th>
+<th>Jumla</th>
+</tr>
+
+</thead>
+
+<tbody id="teacherSummaryTable"></tbody>
+
+</table>
+
+</div>
+
+<div class="panel">
+
+<div class="panel-title">
+
+<h3>🏫 Wakuu wa Shule Waliowahi Kuongoza</h3>
+
+<button
+class="btn btn-success admin-only"
+onclick="openModal('headteacherModal')"
+>
+➕ Ongeza Mkuu
+</button>
+
+</div>
+
+<table>
+
+<thead>
+
+<tr>
+<th>#</th>
+<th>Jina</th>
+<th>Kuanzia</th>
+<th>Hadi</th>
+<th>Kitendo</th>
+</tr>
+
+</thead>
+
+<tbody id="headteacherTable"></tbody>
+
+</table>
+
+</div>
+
+</section>
+
+<!-- =========================================================
+FINANCE
+========================================================= -->
+
+<section id="finance" class="page">
+
+<div class="hero">
+
+<h1>💰 Fedha za Shule</h1>
+
+<p>
+Simamia fedha zilizo benki, mapato, matumizi na madeni.
+</p>
+
+</div>
+
+<div class="cards">
+
+<div class="card">
+<h3>FEDHA BENKI</h3>
+<strong id="bankMoney">Tsh 0</strong>
+</div>
+
+<div class="card">
+<h3>MAPATO</h3>
+<strong id="financeIncome">Tsh 0</strong>
+</div>
+
+<div class="card">
+<h3>MATUMIZI</h3>
+<strong id="financeExpense">Tsh 0</strong>
+</div>
+
+<div class="card">
+<h3>JUMLA YA MADENI</h3>
+<strong id="totalDebt">Tsh 0</strong>
+</div>
+
+</div>
+
+<div class="panel">
+
+<div class="panel-title">
+
+<h3>💳 Fedha ya Benki</h3>
+
+<button
+class="btn admin-only"
+onclick="openModal('bankModal')"
+>
+➕ Weka Salio la Benki
+</button>
+
+</div>
+
+<div id="bankInfo"></div>
+
+</div>
+
+<div class="panel">
+
+<div class="panel-title">
+
+<h3>📒 Mapato na Matumizi</h3>
+
+<button
+class="btn btn-success admin-only"
+onclick="openModal('financeModal')"
+>
+➕ Rekodi Fedha
+</button>
+
+</div>
+
+<table>
+
+<thead>
+
+<tr>
+<th>Tarehe</th>
+<th>Maelezo</th>
+<th>Aina</th>
+<th>Kiasi</th>
+<th>Kitendo</th>
+</tr>
+
+</thead>
+
+<tbody id="financeTable"></tbody>
+
+</table>
+
+</div>
+
+<div class="panel">
+
+<div class="panel-title">
+
+<h3>👨‍🏫 Walimu/Watumishi Wanaoidai Shule</h3>
+
+<button
+class="btn btn-purple admin-only"
+onclick="openModal('debtModal')"
+>
+➕ Ongeza Dai
+</button>
+
+</div>
+
+<table>
+
+<thead>
+
+<tr>
+<th>Jina</th>
+<th>Kiasi Anachodaiwa</th>
+<th>Alicholipwa</th>
+<th>Tarehe ya Malipo</th>
+<th>Baki</th>
+<th>Kitendo</th>
+</tr>
+
+</thead>
+
+<tbody id="debtTable"></tbody>
+
+</table>
+
+</div>
+
+</section>
+
+<!-- =========================================================
+ATTENDANCE
+========================================================= -->
+
+<section id="attendance" class="page">
+
+<div class="hero">
+
+<h1>📅 Mahudhurio</h1>
+
+<p>Rekodi mahudhurio kwa darasa na tarehe.</p>
+
+</div>
+
+<div class="panel">
+
+<div class="panel-title">
+
+<h3>Mahudhurio ya Wanafunzi</h3>
+
+<button
+class="btn admin-only"
+onclick="openModal('attendanceModal')"
+>
+➕ Weka Mahudhurio
+</button>
+
+</div>
+
+<table>
+
+<thead>
+
+<tr>
+<th>Tarehe</th>
+<th>Darasa</th>
+<th>Waliohudhuria</th>
+<th>Wasiohudhuria</th>
+<th>%</th>
+<th>Kitendo</th>
+</tr>
+
+</thead>
+
+<tbody id="attendanceTable"></tbody>
+
+</table>
+
+</div>
+
+</section>
+
+<!-- =========================================================
+VALUES
+========================================================= -->
+
+<section id="values" class="page">
+
+<div class="hero">
+
+<h1>⭐ Thamani & Miundombinu ya Shule</h1>
+
+<p>
+Hapa tunaweka thamani za shule pamoja na takwimu za miundombinu na vyoo.
+</p>
+
+</div>
+
+<div class="cards">
+
+<div class="card">
+<h3>📚 ELIMU</h3>
+<p>Elimu bora kwa maendeleo ya mwanafunzi.</p>
+</div>
+
+<div class="card">
+<h3>⭐ BIDII</h3>
+<p>Kufanya kazi kwa kujituma.</p>
+</div>
+
+<div class="card">
+<h3>🤝 USHIRIKIANO</h3>
+<p>Kushirikiana katika maendeleo ya shule.</p>
+</div>
+
+<div class="card">
+<h3>❤️ HESHIMA</h3>
+<p>Kuheshimiana katika jamii ya shule.</p>
+</div>
+
+<div class="card">
+<h3>🎯 UWAJIBIKAJI</h3>
+<p>Kuwajibika katika majukumu.</p>
+</div>
+
+<div class="card">
+<h3>🏆 UBORA</h3>
+<p>Kulenga viwango bora.</p>
+</div>
+
+</div>
+
+<div class="panel">
+
+<div class="panel-title">
+
+<h3>🏫 Miundombinu ya Shule</h3>
+
+<button
+class="btn admin-only"
+onclick="openModal('infrastructureModal')"
+>
+➕ Weka/Hariri Takwimu
+</button>
+
+</div>
+
+<table>
+
+<thead>
+
+<tr>
+<th>Kipengele</th>
+<th>Idadi</th>
+</tr>
+
+</thead>
+
+<tbody id="infrastructureTable"></tbody>
+
+</table>
+
+</div>
+
+<div class="panel">
+
+<h3>🚻 Vyoo vya Wanafunzi na Walimu</h3>
+
+<br>
+
+<table>
+
+<thead>
+
+<tr>
+<th>Kundi</th>
+<th>Me</th>
+<th>Ke</th>
+<th>Jumla</th>
+</tr>
+
+</thead>
+
+<tbody id="toiletTable"></tbody>
+
+</table>
+
+</div>
+
+</section>
+
+<!-- =========================================================
+NEWS
+========================================================= -->
+
+<section id="news" class="page">
+
+<div class="hero">
+
+<h1>📰 NEWS — Taarifa Mpya za Shule</h1>
+
+<p>
+Matokeo yaliyotangazwa yanaonekana hapa.
+</p>
+
+</div>
+
+<div class="news-banner">
+
+<marquee
+behavior="scroll"
+direction="left"
+scrollamount="6"
+>
+🔴 NEWS MPYA — Matokeo yaliyotangazwa yanaweza kufunguliwa hapa.
+</marquee>
+
+</div>
+
+<div class="panel">
+
+<div class="form-grid">
+
+<div class="form-group">
+
+<label>Chagua Darasa</label>
+
+<select
+id="newsClassFilter"
+onchange="renderNews()"
+>
+
+<option value="">-- Madarasa Yote --</option>
+<option>Awali</option>
+<option>I</option>
+<option>II</option>
+<option>III</option>
+<option>IV</option>
+<option>V</option>
+<option>VI</option>
+<option>VII</option>
+
+</select>
+
+</div>
+
+</div>
+
+<br>
+
+<div id="newsResults"></div>
+
+</div>
+
+</section>
+
+<!-- =========================================================
+REPORTS
+========================================================= -->
+
+<section id="reports" class="page">
+
+<div class="hero">
+
+<h1>📑 Ripoti</h1>
+
+<p>
+Chapisha taarifa mbalimbali za shule.
+</p>
+
+</div>
+
+<div class="cards">
+
+<div class="card">
+
+<h3>WANAFUNZI</h3>
+
+<strong id="reportStudents">0</strong>
+
+<br><br>
+
+<button
+class="btn"
+onclick="printStudentReport()"
+>
+🖨️ Chapisha
+</button>
+
+</div>
+
+<div class="card">
+
+<h3>WALIMU</h3>
+
+<strong id="reportTeachers">0</strong>
+
+<br><br>
+
+<button
+class="btn"
+onclick="printTeacherReport()"
+>
+🖨️ Chapisha
+</button>
+
+</div>
+
+<div class="card">
+
+<h3>FEDHA</h3>
+
+<strong id="reportFinance">0</strong>
+
+<br><br>
+
+<button
+class="btn"
+onclick="printFinanceReport()"
+>
+🖨️ Chapisha
+</button>
+
+</div>
+
+</div>
+
+</section>
+
+<div class="footer">
+
+© 2026 HILLU Primary School |
+<b>KAZI NA SARA</b>
+
+</div>
+
+</div>
+</main>
+
+<!-- =========================================================
+STUDENT COUNT MODAL
+========================================================= -->
+
+<div class="modal" id="studentCountModal">
+
+<div class="modal-box">
+
+<div class="modal-header">
+
+<h3>Weka Idadi ya Wanafunzi</h3>
+
+<button
+class="close"
+onclick="closeModal('studentCountModal')"
+>
+X
+</button>
+
+</div>
+
+<form onsubmit="saveStudentCounts(event)">
+
+<div class="form-grid">
+
+<div class="form-group">
+
+<label>Darasa</label>
+
+<select id="scClass">
+
+<option>Awali</option>
+<option>I</option>
+<option>II</option>
+<option>III</option>
+<option>IV</option>
+<option>V</option>
+<option>VI</option>
+<option>VII</option>
+
+</select>
+
+</div>
+
+<div class="form-group">
+
+<label>Me</label>
+
+<input
+type="number"
+id="scMale"
+min="0"
+required
+>
+
+</div>
+
+<div class="form-group">
+
+<label>Ke</label>
+
+<input
+type="number"
+id="scFemale"
+min="0"
+required
+>
+
+</div>
+
+</div>
+
+<div class="form-actions">
+
+<button
+type="button"
+class="btn btn-danger"
+onclick="closeModal('studentCountModal')"
+>
+Ghairi
+</button>
+
+<button class="btn btn-success">
+Hifadhi
+</button>
+
+</div>
+
+</form>
+
+</div>
+</div>
+
+<!-- =========================================================
+SPECIAL NEED
+========================================================= -->
+
+<div class="modal" id="specialNeedModal">
+
+<div class="modal-box">
+
+<div class="modal-header">
+
+<h3>Mahitaji Maalumu</h3>
+
+<button
+class="close"
+onclick="closeModal('specialNeedModal')"
+>
+X
+</button>
+
+</div>
+
+<form onsubmit="saveSpecialNeed(event)">
+
+<div class="form-grid">
+
+<div class="form-group">
+
+<label>Darasa</label>
+
+<select id="snClass">
+
+<option>Awali</option>
+<option>I</option>
+<option>II</option>
+<option>III</option>
+<option>IV</option>
+<option>V</option>
+<option>VI</option>
+<option>VII</option>
+
+</select>
+
+</div>
+
+<div class="form-group">
+
+<label>Aina ya Hitaji</label>
+
+<select id="snType">
+
+<option>Uoni</option>
+<option>Usikivu</option>
+<option>Ulemavu wa Akili</option>
+<option>Ulemavu wa Viungo</option>
+<option>Usonji</option>
+<option>Ulemavu wa Kujifunza</option>
+<option>Mchanganyiko</option>
+<option>Nyingine</option>
+
+</select>
+
+</div>
+
+<div class="form-group">
+
+<label>Me</label>
+
+<input
+type="number"
+id="snMale"
+min="0"
+required
+>
+
+</div>
+
+<div class="form-group">
+
+<label>Ke</label>
+
+<input
+type="number"
+id="snFemale"
+min="0"
+required
+>
+
+</div>
+
+</div>
+
+<div class="form-actions">
+
+<button
+type="button"
+class="btn btn-danger"
+onclick="closeModal('specialNeedModal')"
+>
+Ghairi
+</button>
+
+<button class="btn btn-success">
+Hifadhi
+</button>
+
+</div>
+
+</form>
+
+</div>
+</div>
+
+<!-- =========================================================
+SUBJECT MODAL
+========================================================= -->
+
+<div class="modal" id="subjectModal">
+
+<div class="modal-box">
+
+<div class="modal-header">
+
+<h3>Ongeza Somo</h3>
+
+<button
+class="close"
+onclick="closeModal('subjectModal')"
+>
+X
+</button>
+
+</div>
+
+<form onsubmit="saveSubject(event)">
+
+<div class="form-grid">
+
+<div class="form-group">
+
+<label>Darasa</label>
+
+<select id="subClass" required>
+
+<option>Awali</option>
+<option>I</option>
+<option>II</option>
+<option>III</option>
+<option>IV</option>
+<option>V</option>
+<option>VI</option>
+<option>VII</option>
+
+</select>
+
+</div>
+
+<div class="form-group">
+
+<label>Jina la Somo</label>
+
+<input
+id="subName"
+placeholder="Mfano: Hisabati"
+required
+>
+
+</div>
+
+</div>
+
+<div class="form-actions">
+
+<button
+type="button"
+class="btn btn-danger"
+onclick="closeModal('subjectModal')"
+>
+Ghairi
+</button>
+
+<button class="btn btn-success">
++ Ongeza Somo
+</button>
+
+</div>
+
+</form>
+
+</div>
+</div>
+
+<!-- =========================================================
+TEACHER COUNT
+========================================================= -->
+
+<div class="modal" id="teacherCountModal">
+
+<div class="modal-box">
+
+<div class="modal-header">
+
+<h3>Idadi ya Walimu</h3>
+
+<button
+class="close"
+onclick="closeModal('teacherCountModal')"
+>
+X
+</button>
+
+</div>
+
+<form onsubmit="saveTeacherCount(event)">
+
+<div class="form-grid">
+
+<div class="form-group">
+
+<label>Walimu Me</label>
+
+<input
+type="number"
+id="tmale"
+min="0"
+required
+>
+
+</div>
+
+<div class="form-group">
+
+<label>Walimu Ke</label>
+
+<input
+type="number"
+id="tfemale"
+min="0"
+required
+>
+
+</div>
+
+</div>
+
+<div class="form-actions">
+
+<button
+type="button"
+class="btn btn-danger"
+onclick="closeModal('teacherCountModal')"
+>
+Ghairi
+</button>
+
+<button class="btn btn-success">
+Hifadhi
+</button>
+
+</div>
+
+</form>
+
+</div>
+</div>
+
+<!-- =========================================================
+HEADTEACHER
+========================================================= -->
+
+<div class="modal" id="headteacherModal">
+
+<div class="modal-box">
+
+<div class="modal-header">
+
+<h3>Mkuu wa Shule</h3>
+
+<button
+class="close"
+onclick="closeModal('headteacherModal')"
+>
+X
+</button>
+
+</div>
+
+<form onsubmit="saveHeadteacher(event)">
+
+<div class="form-grid">
+
+<div class="form-group">
+
+<label>Jina la Mkuu</label>
+
+<input id="htName" required>
+
+</div>
+
+<div class="form-group">
+
+<label>Kuanzia Mwaka</label>
+
+<input
+type="number"
+id="htFrom"
+min="1900"
+max="2100"
+required
+>
+
+</div>
+
+<div class="form-group">
+
+<label>Hadi Mwaka</label>
+
+<input
+type="number"
+id="htTo"
+min="1900"
+max="2100"
+required
+>
+
+</div>
+
+</div>
+
+<div class="form-actions">
+
+<button
+type="button"
+class="btn btn-danger"
+onclick="closeModal('headteacherModal')"
+>
+Ghairi
+</button>
+
+<button class="btn btn-success">
+Hifadhi
+</button>
+
+</div>
+
+</form>
+
+</div>
+</div>
+
+<!-- =========================================================
+BANK
+========================================================= -->
+
+<div class="modal" id="bankModal">
+
+<div class="modal-box">
+
+<div class="modal-header">
+
+<h3>Fedha Iliyo Benki</h3>
+
+<button
+class="close"
+onclick="closeModal('bankModal')"
+>
+X
+</button>
+
+</div>
+
+<form onsubmit="saveBank(event)">
+
+<div class="form-grid">
+
+<div class="form-group">
+
+<label>Salio la Benki (Tsh)</label>
+
+<input
+type="number"
+id="bankAmount"
+min="0"
+required
+>
+
+</div>
+
+</div>
+
+<div class="form-actions">
+
+<button
+type="button"
+class="btn btn-danger"
+onclick="closeModal('bankModal')"
+>
+Ghairi
+</button>
+
+<button class="btn btn-success">
+Hifadhi
+</button>
+
+</div>
+
+</form>
+
+</div>
+</div>
+
+<!-- =========================================================
+FINANCE
+========================================================= -->
+
+<div class="modal" id="financeModal">
+
+<div class="modal-box">
+
+<div class="modal-header">
+
+<h3>Rekodi ya Fedha</h3>
+
+<button
+class="close"
+onclick="closeModal('financeModal')"
+>
+X
+</button>
+
+</div>
+
+<form onsubmit="saveFinance(event)">
+
+<div class="form-grid">
+
+<div class="form-group">
+
+<label>Tarehe</label>
+
+<input
+type="date"
+id="fDate"
+required
+>
+
+</div>
+
+<div class="form-group">
+
+<label>Aina</label>
+
+<select id="fType">
+
+<option>INGIZO</option>
+<option>MATUMIZI</option>
+
+</select>
+
+</div>
+
+<div class="form-group">
+
+<label>Maelezo</label>
+
+<input id="fDescription" required>
+
+</div>
+
+<div class="form-group">
+
+<label>Kiasi (Tsh)</label>
+
+<input
+type="number"
+id="fAmount"
+min="0"
+required
+>
+
+</div>
+
+</div>
+
+<div class="form-actions">
+
+<button
+type="button"
+class="btn btn-danger"
+onclick="closeModal('financeModal')"
+>
+Ghairi
+</button>
+
+<button class="btn btn-success">
+Hifadhi
+</button>
+
+</div>
+
+</form>
+
+</div>
+</div>
+
+<!-- =========================================================
+DEBT
+========================================================= -->
+
+<div class="modal" id="debtModal">
+
+<div class="modal-box">
+
+<div class="modal-header">
+
+<h3>Dai la Mwalimu/Mtumishi</h3>
+
+<button
+class="close"
+onclick="closeModal('debtModal')"
+>
+X
+</button>
+
+</div>
+
+<form onsubmit="saveDebt(event)">
+
+<div class="form-grid">
+
+<div class="form-group">
+
+<label>Jina la Mwalimu/Mtumishi</label>
+
+<input id="dName" required>
+
+</div>
+
+<div class="form-group">
+
+<label>Kiasi Anachodaiwa</label>
+
+<input
+type="number"
+id="dOwed"
+min="0"
+required
+>
+
+</div>
+
+<div class="form-group">
+
+<label>Kiasi Alicholipwa</label>
+
+<input
+type="number"
+id="dPaid"
+min="0"
+required
+>
+
+</div>
+
+<div class="form-group">
+
+<label>Tarehe ya Malipo</label>
+
+<input
+type="date"
+id="dDate"
+>
+
+</div>
+
+</div>
+
+<div class="form-actions">
+
+<button
+type="button"
+class="btn btn-danger"
+onclick="closeModal('debtModal')"
+>
+Ghairi
+</button>
+
+<button class="btn btn-success">
+Hifadhi Dai
+</button>
+
+</div>
+
+</form>
+
+</div>
+</div>
+
+<!-- =========================================================
+ATTENDANCE
+========================================================= -->
+
+<div class="modal" id="attendanceModal">
+
+<div class="modal-box">
+
+<div class="modal-header">
+
+<h3>Mahudhurio</h3>
+
+<button
+class="close"
+onclick="closeModal('attendanceModal')"
+>
+X
+</button>
+
+</div>
+
+<form onsubmit="saveAttendance(event)">
+
+<div class="form-grid">
+
+<div class="form-group">
+
+<label>Tarehe</label>
+
+<input
+type="date"
+id="aDate"
+required
+>
+
+</div>
+
+<div class="form-group">
+
+<label>Darasa</label>
+
+<select id="aClass">
+
+<option>Awali</option>
+<option>I</option>
+<option>II</option>
+<option>III</option>
+<option>IV</option>
+<option>V</option>
+<option>VI</option>
+<option>VII</option>
+
+</select>
+
+</div>
+
+<div class="form-group">
+
+<label>Waliohudhuria</label>
+
+<input
+type="number"
+id="aPresent"
+min="0"
+required
+>
+
+</div>
+
+<div class="form-group">
+
+<label>Wasiohudhuria</label>
+
+<input
+type="number"
+id="aAbsent"
+min="0"
+required
+>
+
+</div>
+
+</div>
+
+<div class="form-actions">
+
+<button
+type="button"
+class="btn btn-danger"
+onclick="closeModal('attendanceModal')"
+>
+Ghairi
+</button>
+
+<button class="btn btn-success">
+Hifadhi
+</button>
+
+</div>
+
+</form>
+
+</div>
+</div>
+
+<!-- =========================================================
+INFRASTRUCTURE
+========================================================= -->
+
+<div class="modal" id="infrastructureModal">
+
+<div class="modal-box">
+
+<div class="modal-header">
+
+<h3>Miundombinu</h3>
+
+<button
+class="close"
+onclick="closeModal('infrastructureModal')"
+>
+X
+</button>
+
+</div>
+
+<form onsubmit="saveInfrastructure(event)">
+
+<div class="form-grid">
+
+<div class="form-group">
+<label>Madarasa</label>
+<input
+type="number"
+id="infraClassrooms"
+min="0"
+required
+>
+</div>
+
+<div class="form-group">
+<label>Madawati</label>
+<input
+type="number"
+id="infraDesks"
+min="0"
+required
+>
+</div>
+
+<div class="form-group">
+<label>Meza</label>
+<input
+type="number"
+id="infraTables"
+min="0"
+required
+>
+</div>
+
+<div class="form-group">
+<label>Viti</label>
+<input
+type="number"
+id="infraChairs"
+min="0"
+required
+>
+</div>
+
+<div class="form-group">
+<label>Nyumba za Walimu</label>
+<input
+type="number"
+id="infraHouses"
+min="0"
+required
+>
+</div>
+
+<div class="form-group">
+<label>Vyoo Wanafunzi Me</label>
+<input
+type="number"
+id="toiletStudentMale"
+min="0"
+required
+>
+</div>
+
+<div class="form-group">
+<label>Vyoo Wanafunzi Ke</label>
+<input
+type="number"
+id="toiletStudentFemale"
+min="0"
+required
+>
+</div>
+
+<div class="form-group">
+<label>Vyoo Walimu Me</label>
+<input
+type="number"
+id="toiletTeacherMale"
+min="0"
+required
+>
+</div>
+
+<div class="form-group">
+<label>Vyoo Walimu Ke</label>
+<input
+type="number"
+id="toiletTeacherFemale"
+min="0"
+required
+>
+</div>
+
+</div>
+
+<div class="form-actions">
+
+<button
+type="button"
+class="btn btn-danger"
+onclick="closeModal('infrastructureModal')"
+>
+Ghairi
+</button>
+
+<button class="btn btn-success">
+Hifadhi
+</button>
+
+</div>
+
+</form>
+
+</div>
+</div>
+
+<!-- =========================================================
+ASSESSMENT
+========================================================= -->
+
+<div class="modal" id="assessmentModal">
+
+<div class="modal-box">
+
+<div class="modal-header">
+
+<h3>Andika Tathmini ya Matokeo</h3>
+
+<button
+class="close"
+onclick="closeModal('assessmentModal')"
+>
+X
+</button>
+
+</div>
+
+<form onsubmit="saveAssessment(event)">
+
+<div class="form-grid">
+
+<div class="form-group">
+
+<label>Mwaka</label>
+
+<select id="assYear"></select>
+
+</div>
+
+<div class="form-group">
+
+<label>Darasa</label>
+
+<select id="assClass">
+
+<option>IV</option>
+<option>VII</option>
+
+</select>
+
+</div>
+
+<div class="form-group">
+
+<label>Jinsia</label>
+
+<select id="assGender">
+
+<option>Me</option>
+<option>Ke</option>
+
+</select>
+
+</div>
+
+<div class="form-group">
+<label>A</label>
+<input type="number" id="assA" min="0" required>
+</div>
+
+<div class="form-group">
+<label>B</label>
+<input type="number" id="assB" min="0" required>
+</div>
+
+<div class="form-group">
+<label>C</label>
+<input type="number" id="assC" min="0" required>
+</div>
+
+<div class="form-group">
+<label>D</label>
+<input type="number" id="assD" min="0" required>
+</div>
+
+<div class="form-group">
+<label>E</label>
+<input type="number" id="assE" min="0" required>
+</div>
+
+</div>
+
+<div class="form-actions">
+
+<button
+type="button"
+class="btn btn-danger"
+onclick="closeModal('assessmentModal')"
+>
+Ghairi
+</button>
+
+<button class="btn btn-success">
+Hifadhi Tathmini
+</button>
+
+</div>
+
+</form>
+
+</div>
+</div>
+
+<!-- =========================================================
+PUBLISH
+========================================================= -->
+
+<div class="modal" id="publishResultModal">
+
+<div class="modal-box">
+
+<div class="modal-header">
+
+<h3>📢 Tangaza Matokeo</h3>
+
+<button
+class="close"
+onclick="closeModal('publishResultModal')"
+>
+X
+</button>
+
+</div>
+
+<form onsubmit="publishResult(event)">
+
+<div class="form-grid">
+
+<div class="form-group">
+
+<label>Darasa</label>
+
+<select id="pubClass">
+
+<option>Awali</option>
+<option>I</option>
+<option>II</option>
+<option>III</option>
+<option>IV</option>
+<option>V</option>
+<option>VI</option>
+<option>VII</option>
+<option>Madarsa Yote</option>
+
+</select>
+
+</div>
+
+<div class="form-group">
+
+<label>Mwaka</label>
+
+<input
+type="number"
+id="pubYear"
+value="2026"
+required
+>
+
+</div>
+
+<div class="form-group">
+
+<label>Tarehe ya Tangazo</label>
+
+<input
+type="date"
+id="pubDate"
+required
+>
+
+</div>
+
+</div>
+
+<div class="form-actions">
+
+<button
+type="button"
+class="btn btn-danger"
+onclick="closeModal('publishResultModal')"
+>
+Ghairi
+</button>
+
+<button class="btn btn-success">
+📢 Tangaza
+</button>
+
+</div>
+
+</form>
+
+</div>
+</div>
+
+<script>
+
+/* =========================================================
+SUPABASE CONFIGURATION
+=========================================================
+
+WEKA TAARIFA ZAKO HAPA:
+
+const SUPABASE_URL = "https://YOUR-PROJECT.supabase.co";
+const SUPABASE_ANON_KEY = "YOUR-ANON-KEY";
+
+Usitumie service_role key kwenye HTML.
+
+========================================================= */
+
+const SUPABASE_URL = "";
+const SUPABASE_ANON_KEY = "";
+
+let supabaseClient = null;
+
+if(
+    SUPABASE_URL &&
+    SUPABASE_ANON_KEY &&
+    typeof window.supabase !== "undefined"
+){
+
+    supabaseClient =
+        window.supabase.createClient(
+            SUPABASE_URL,
+            SUPABASE_ANON_KEY
+        );
+
+}
+
+/* =========================================================
+ROLE LOGIN
+=========================================================
+
+ADMIN:
+username = admin
+password = HILLU2026
+
+VIEWER:
+username = viewer
+password = viewer123
+
+Credentials hizi zimewekwa ndani ya JavaScript,
+hazionyeshwi kwenye login screen.
+========================================================= */
+
+const HILLU_USERS = {
+
+    admin:{
+        password:"HILLU2026",
+        role:"admin",
+        name:"Administrator"
+    },
+
+    viewer:{
+        password:"viewer123",
+        role:"viewer",
+        name:"Viewer"
+    }
+
+};
+
+let currentUser=null;
+
+/* =========================================================
+LOGIN
+========================================================= */
+
+function login(e){
+
+    e.preventDefault();
+
+    const username=
+        String(
+            document.getElementById("loginUsername").value || ""
+        )
+        .trim()
+        .toLowerCase();
+
+    const password=
+        String(
+            document.getElementById("loginPassword").value || ""
+        );
+
+    const user=
+        HILLU_USERS[username];
+
+    const error=
+        document.getElementById("loginError");
+
+    if(
+        !user ||
+        user.password !== password
+    ){
+
+        error.style.display="block";
+
+        return;
+
+    }
+
+    currentUser={
+
+        username:username,
+
+        role:user.role,
+
+        name:user.name
+
+    };
+
+    sessionStorage.setItem(
+        "hillu_current_user",
+        JSON.stringify(currentUser)
+    );
+
+    document.body.classList.add("logged-in");
+
+    document.body.classList.toggle(
+        "viewer",
+        user.role==="viewer"
+    );
+
+    updateUserDisplay();
+
+    error.style.display="none";
+
+    document.getElementById(
+        "loginPassword"
+    ).value="";
+
+    applyRolePermissions();
+
+}
+
+/* =========================================================
+USER DISPLAY
+========================================================= */
+
+function updateUserDisplay(){
+
+    const box=
+        document.getElementById("loggedUser");
+
+    if(!box || !currentUser)
+        return;
+
+    box.innerHTML=
+        "👤 "+
+        currentUser.name+
+        " <small>("+
+        currentUser.role.toUpperCase()+
+        ")</small>";
+
+    box.classList.toggle(
+        "role-viewer",
+        currentUser.role==="viewer"
+    );
+
+    if(!document.getElementById("logoutBtn")){
+
+        const btn=
+            document.createElement("button");
+
+        btn.id="logoutBtn";
+
+        btn.className=
+            "btn btn-danger btn-small";
+
+        btn.style.marginLeft="8px";
+
+        btn.textContent="Toka";
+
+        btn.onclick=logout;
+
+        box.appendChild(btn);
+
+    }
+
+}
+
+/* =========================================================
+LOGOUT
+========================================================= */
+
+function logout(){
+
+    currentUser=null;
+
+    sessionStorage.removeItem(
+        "hillu_current_user"
+    );
+
+    document.body.classList.remove(
+        "logged-in",
+        "viewer"
+    );
+
+    document.getElementById(
+        "loginUsername"
+    ).value="";
+
+    document.getElementById(
+        "loginPassword"
+    ).value="";
+
+}
+
+/* =========================================================
+ADMIN CHECK
+========================================================= */
+
+function isAdmin(){
+
+    return(
+        !!currentUser &&
+        currentUser.role==="admin"
+    );
+
+}
+
+function requireAdmin(){
+
+    if(!isAdmin()){
+
+        alert(
+            "Ruhusa imekataliwa.\n\n"+
+            "Admin pekee ndiye anayeruhusiwa "+
+            "kuongeza, kubadilisha au kufuta taarifa."
+        );
+
+        return false;
+
+    }
+
+    return true;
+
+}
+
+/* =========================================================
+PERMISSIONS
+========================================================= */
+
+function applyRolePermissions(){
+
+    document.body.classList.toggle(
+        "viewer",
+        !isAdmin()
+    );
+
+    document
+        .querySelectorAll(".admin-only")
+        .forEach(el=>{
+
+            el.style.display=
+                isAdmin() ? "" : "none";
+
+        });
+
+}
+
+/* =========================================================
+RESTORE LOGIN
+========================================================= */
+
+function restoreLogin(){
+
+    try{
+
+        const saved=
+            JSON.parse(
+                sessionStorage.getItem(
+                    "hillu_current_user"
+                ) || "null"
+            );
+
+        if(
+            saved &&
+            HILLU_USERS[saved.username] &&
+            saved.role===
+            HILLU_USERS[saved.username].role
+        ){
+
+            currentUser=saved;
+
+            document.body.classList.add(
+                "logged-in"
+            );
+
+            document.body.classList.toggle(
+                "viewer",
+                !isAdmin()
+            );
+
+            updateUserDisplay();
+
+            applyRolePermissions();
+
+        }
+
+    }catch(error){
+
+        console.warn(
+            "Login restore failed",
+            error
+        );
+
+    }
+
+}
+
+/* =========================================================
+DATABASE
+========================================================= */
+
+let studentCounts=
+JSON.parse(
+    localStorage.getItem(
+        "hillu_student_counts"
+    ) || "{}"
+);
+
+let specialNeeds=
+JSON.parse(
+    localStorage.getItem(
+        "hillu_special_needs"
+    ) || "[]"
+);
+
+let subjects=
+JSON.parse(
+    localStorage.getItem(
+        "hillu_subjects"
+    ) || "[]"
+);
+
+let teachers=
+JSON.parse(
+    localStorage.getItem(
+        "hillu_teachers_count"
+    ) ||
+    '{"male":0,"female":0}'
+);
+
+let headteachers=
+JSON.parse(
+    localStorage.getItem(
+        "hillu_headteachers"
+    ) || "[]"
+);
+
+let finances=
+JSON.parse(
+    localStorage.getItem(
+        "hillu_finances"
+    ) || "[]"
+);
+
+let debts=
+JSON.parse(
+    localStorage.getItem(
+        "hillu_debts"
+    ) || "[]"
+);
+
+let attendance=
+JSON.parse(
+    localStorage.getItem(
+        "hillu_attendance"
+    ) || "[]"
+);
+
+let assessments=
+JSON.parse(
+    localStorage.getItem(
+        "hillu_assessments"
+    ) || "[]"
+);
+
+let publishedResults=
+JSON.parse(
+    localStorage.getItem(
+        "hillu_published_results"
+    ) || "[]"
+);
+
+let resultRecords=
+JSON.parse(
+    localStorage.getItem(
+        "hillu_results"
+    ) || "[]"
+);
+
+let bankAmount=
+Number(
+    localStorage.getItem(
+        "hillu_bank"
+    ) || 0
+);
+
+let infrastructure=
+JSON.parse(
+    localStorage.getItem(
+        "hillu_infrastructure"
+    ) ||
+    '{"classrooms":0,"desks":0,"tables":0,"chairs":0,"houses":0,"studentMale":0,"studentFemale":0,"teacherMale":0,"teacherFemale":0}'
+);
+
+/* =========================================================
+CLASSES
+========================================================= */
+
+const classes=[
+    "Awali",
+    "I",
+    "II",
+    "III",
+    "IV",
+    "V",
+    "VI",
+    "VII"
+];
+
+/* =========================================================
+NAVIGATION
+========================================================= */
+
+function showPage(id,button){
+
+    document
+        .querySelectorAll(".page")
+        .forEach(p=>
+            p.classList.remove("active")
+        );
+
+    document
+        .getElementById(id)
+        .classList.add("active");
+
+    document
+        .querySelectorAll(".menu button")
+        .forEach(b=>
+            b.classList.remove("active")
+        );
+
+    button.classList.add("active");
+
+    refresh();
+
+}
+
+/* =========================================================
+MODALS
+========================================================= */
+
+function openModal(id){
+
+    if(!requireAdmin())
+        return;
+
+    document
+        .getElementById(id)
+        .classList.add("show");
+
+}
+
+function closeModal(id){
+
+    document
+        .getElementById(id)
+        .classList.remove("show");
+
+}
+
+/* =========================================================
+LOCAL SAVE
+========================================================= */
+
+function saveAll(){
+
+    if(!isAdmin())
+        return;
+
+    localStorage.setItem(
+        "hillu_student_counts",
+        JSON.stringify(studentCounts)
+    );
+
+    localStorage.setItem(
+        "hillu_special_needs",
+        JSON.stringify(specialNeeds)
+    );
+
+    localStorage.setItem(
+        "hillu_subjects",
+        JSON.stringify(subjects)
+    );
+
+    localStorage.setItem(
+        "hillu_teachers_count",
+        JSON.stringify(teachers)
+    );
+
+    localStorage.setItem(
+        "hillu_headteachers",
+        JSON.stringify(headteachers)
+    );
+
+    localStorage.setItem(
+        "hillu_finances",
+        JSON.stringify(finances)
+    );
+
+    localStorage.setItem(
+        "hillu_debts",
+        JSON.stringify(debts)
+    );
+
+    localStorage.setItem(
+        "hillu_attendance",
+        JSON.stringify(attendance)
+    );
+
+    localStorage.setItem(
+        "hillu_assessments",
+        JSON.stringify(assessments)
+    );
+
+    localStorage.setItem(
+        "hillu_published_results",
+        JSON.stringify(publishedResults)
+    );
+
+    localStorage.setItem(
+        "hillu_results",
+        JSON.stringify(resultRecords)
+    );
+
+    localStorage.setItem(
+        "hillu_bank",
+        bankAmount
+    );
+
+    localStorage.setItem(
+        "hillu_infrastructure",
+        JSON.stringify(infrastructure)
+    );
+
+}
+
+/* =========================================================
+SUPABASE STATUS
+========================================================= */
+
+function updateCloudStatus(){
+
+    const box=
+        document.getElementById(
+            "cloudStatus"
+        );
+
+    if(!box)
+        return;
+
+    if(supabaseClient){
+
+        box.className=
+            "cloud-status online";
+
+        box.innerHTML=
+            "☁️ Supabase imeunganishwa";
+
+    }else{
+
+        box.className=
+            "cloud-status offline";
+
+        box.innerHTML=
+            "💾 Local Storage";
+
+    }
+
+}
+
+/* =========================================================
+STUDENT
+========================================================= */
+
+function saveStudentCounts(e){
+
+    if(!requireAdmin())
+        return;
+
+    e.preventDefault();
+
+    let cls=
+        document.getElementById(
+            "scClass"
+        ).value;
+
+    studentCounts[cls]={
+
+        male:Number(
+            document.getElementById(
+                "scMale"
+            ).value
+        ),
+
+        female:Number(
+            document.getElementById(
+                "scFemale"
+            ).value
+        )
+
+    };
+
+    saveAll();
+
+    closeModal(
+        "studentCountModal"
+    );
+
+    renderStudents();
+
+    updateDashboard();
+
+}
+
+function renderStudents(){
+
+    let tbody=
+        document.getElementById(
+            "studentClassTable"
+        );
+
+    tbody.innerHTML="";
+
+    classes.forEach(cls=>{
+
+        let d=
+            studentCounts[cls] ||
+            {
+                male:0,
+                female:0
+            };
+
+        let total=
+            d.male+d.female;
+
+        tbody.innerHTML+=`
+
+        <tr>
+
+            <td><b>${cls}</b></td>
+
+            <td>${d.male}</td>
+
+            <td>${d.female}</td>
+
+            <td><b>${total}</b></td>
+
+        </tr>
+
+        `;
+
+    });
+
+    let special=
+        document.getElementById(
+            "specialNeedTable"
+        );
+
+    special.innerHTML="";
+
+    specialNeeds.forEach((n,i)=>{
+
+        let total=
+            n.male+n.female;
+
+        special.innerHTML+=`
+
+        <tr>
+
+            <td>${n.className}</td>
+
+            <td>${n.type}</td>
+
+            <td>${n.male}</td>
+
+            <td>${n.female}</td>
+
+            <td>${total}</td>
+
+            <td>
+
+                <button
+                    class="btn btn-danger btn-small admin-only"
+                    onclick="deleteSpecialNeed(${i})"
+                >
+                    Futa
+                </button>
+
+            </td>
+
+        </tr>
+
+        `;
+
+    });
+
+    applyRolePermissions();
+
+}
+
+function saveSpecialNeed(e){
+
+    if(!requireAdmin())
+        return;
+
+    e.preventDefault();
+
+    specialNeeds.push({
+
+        className:
+            document.getElementById(
+                "snClass"
+            ).value,
+
+        type:
+            document.getElementById(
+                "snType"
+            ).value,
+
+        male:Number(
+            document.getElementById(
+                "snMale"
+            ).value
+        ),
+
+        female:Number(
+            document.getElementById(
+                "snFemale"
+            ).value
+        )
+
+    });
+
+    saveAll();
+
+    e.target.reset();
+
+    closeModal(
+        "specialNeedModal"
+    );
+
+    refresh();
+
+}
+
+function deleteSpecialNeed(i){
+
+    if(!requireAdmin())
+        return;
+
+    if(confirm(
+        "Futa taarifa hii?"
+    )){
+
+        specialNeeds.splice(i,1);
+
+        saveAll();
+
+        refresh();
+
+    }
+
+}
+
+/* =========================================================
+SUBJECTS
+========================================================= */
+
+function saveSubject(e){
+
+    if(!requireAdmin())
+        return;
+
+    e.preventDefault();
+
+    let cls=
+        document.getElementById(
+            "subClass"
+        ).value;
+
+    let name=
+        document.getElementById(
+            "subName"
+        ).value
+        .trim();
+
+    if(!name)
+        return;
+
+    subjects.push({
+
+        id:Date.now(),
+
+        className:cls,
+
+        name:name
+
+    });
+
+    saveAll();
+
+    e.target.reset();
+
+    closeModal(
+        "subjectModal"
+    );
+
+    renderSubjects();
+
+    alert(
+        "Somo limeongezwa."
+    );
+
+}
+
+function renderSubjects(){
+
+    let filter=
+        document.getElementById(
+            "subjectClassFilter"
+        ).value;
+
+    let tbody=
+        document.getElementById(
+            "subjectTable"
+        );
+
+    tbody.innerHTML="";
+
+    subjects
+        .filter(
+            s=>
+            !filter ||
+            s.className===filter
+        )
+        .forEach(s=>{
+
+            tbody.innerHTML+=`
+
+            <tr>
+
+                <td>${s.className}</td>
+
+                <td>${s.name}</td>
+
+                <td>
+
+                    <button
+                        class="btn btn-danger btn-small admin-only"
+                        onclick="deleteSubject(${s.id})"
+                    >
+                        Futa
+                    </button>
+
+                </td>
+
+            </tr>
+
+            `;
+
+        });
+
+    applyRolePermissions();
+
+}
+
+function deleteSubject(id){
+
+    if(!requireAdmin())
+        return;
+
+    if(confirm(
+        "Futa somo hili?"
+    )){
+
+        subjects=
+            subjects.filter(
+                s=>s.id!==id
+            );
+
+        saveAll();
+
+        renderSubjects();
+
+    }
+
+}
+
+function getSubjectsForClass(cls){
+
+    return subjects
+        .filter(
+            s=>s.className===cls
+        )
+        .map(
+            s=>s.name
+        );
+
+}
+
+/* =========================================================
+TEACHERS
+========================================================= */
+
+function saveTeacherCount(e){
+
+    if(!requireAdmin())
+        return;
+
+    e.preventDefault();
+
+    teachers.male=
+        Number(
+            document.getElementById(
+                "tmale"
+            ).value
+        );
+
+    teachers.female=
+        Number(
+            document.getElementById(
+                "tfemale"
+            ).value
+        );
+
+    saveAll();
+
+    closeModal(
+        "teacherCountModal"
+    );
+
+    refresh();
+
+}
+
+function renderTeachers(){
+
+    document.getElementById(
+        "teacherMale"
+    ).innerText=
+        teachers.male;
+
+    document.getElementById(
+        "teacherFemale"
+    ).innerText=
+        teachers.female;
+
+    document.getElementById(
+        "teacherTotal"
+    ).innerText=
+        teachers.male+
+        teachers.female;
+
+    document.getElementById(
+        "teacherSummaryTable"
+    ).innerHTML=`
+
+        <tr>
+
+            <td>${teachers.male}</td>
+
+            <td>${teachers.female}</td>
+
+            <td>
+                <b>
+                    ${teachers.male+
+                      teachers.female}
+                </b>
+            </td>
+
+        </tr>
+
+    `;
+
+    let tbody=
+        document.getElementById(
+            "headteacherTable"
+        );
+
+    tbody.innerHTML="";
+
+    headteachers.forEach(
+        (h,i)=>{
+
+            tbody.innerHTML+=`
+
+            <tr>
+
+                <td>${i+1}</td>
+
+                <td>${h.name}</td>
+
+                <td>${h.from}</td>
+
+                <td>${h.to}</td>
+
+                <td>
+
+                    <button
+                        class="btn btn-danger btn-small admin-only"
+                        onclick="deleteHeadteacher(${i})"
+                    >
+                        Futa
+                    </button>
+
+                </td>
+
+            </tr>
+
+            `;
+
+        }
+    );
+
+    applyRolePermissions();
+
+}
+
+function saveHeadteacher(e){
+
+    if(!requireAdmin())
+        return;
+
+    e.preventDefault();
+
+    headteachers.push({
+
+        name:
+            document.getElementById(
+                "htName"
+            ).value,
+
+        from:
+            document.getElementById(
+                "htFrom"
+            ).value,
+
+        to:
+            document.getElementById(
+                "htTo"
+            ).value
+
+    });
+
+    saveAll();
+
+    e.target.reset();
+
+    closeModal(
+        "headteacherModal"
+    );
+
+    refresh();
+
+}
+
+function deleteHeadteacher(i){
+
+    if(!requireAdmin())
+        return;
+
+    if(confirm(
+        "Futa mkuu huyu?"
+    )){
+
+        headteachers.splice(i,1);
+
+        saveAll();
+
+        refresh();
+
+    }
+
+}
+
+/* =========================================================
+BANK
+========================================================= */
+
+function saveBank(e){
+
+    if(!requireAdmin())
+        return;
+
+    e.preventDefault();
+
+    bankAmount=
+        Number(
+            document.getElementById(
+                "bankAmount"
+            ).value
+        );
+
+    saveAll();
+
+    closeModal(
+        "bankModal"
+    );
+
+    refresh();
+
+}
+
+function renderBank(){
+
+    document.getElementById(
+        "bankMoney"
+    ).innerText=
+        "Tsh "+
+        bankAmount.toLocaleString();
+
+    document.getElementById(
+        "dashBank"
+    ).innerText=
+        "Tsh "+
+        bankAmount.toLocaleString();
+
+    document.getElementById(
+        "bankInfo"
+    ).innerHTML=`
+
+        <h2 style="color:#063b66">
+
+            Tsh ${bankAmount.toLocaleString()}
+
+        </h2>
+
+        <p>
+            Salio la fedha lililo benki
+        </p>
+
+    `;
+
+}
+
+/* =========================================================
+FINANCE
+========================================================= */
+
+function saveFinance(e){
+
+    if(!requireAdmin())
+        return;
+
+    e.preventDefault();
+
+    finances.push({
+
+        id:Date.now(),
+
+        date:
+            document.getElementById(
+                "fDate"
+            ).value,
+
+        type:
+            document.getElementById(
+                "fType"
+            ).value,
+
+        description:
+            document.getElementById(
+                "fDescription"
+            ).value,
+
+        amount:Number(
+            document.getElementById(
+                "fAmount"
+            ).value
+        )
+
+    });
+
+    saveAll();
+
+    e.target.reset();
+
+    closeModal(
+        "financeModal"
+    );
+
+    refresh();
+
+}
+
+function renderFinance(){
+
+    let income=0;
+
+    let expense=0;
+
+    let tbody=
+        document.getElementById(
+            "financeTable"
+        );
+
+    tbody.innerHTML="";
+
+    finances.forEach(
+        (f,i)=>{
+
+            if(f.type==="INGIZO")
+                income+=f.amount;
+
+            if(f.type==="MATUMIZI")
+                expense+=f.amount;
+
+            tbody.innerHTML+=`
+
+            <tr>
+
+                <td>${f.date}</td>
+
+                <td>${f.description}</td>
+
+                <td>${f.type}</td>
+
+                <td>
+                    Tsh ${f.amount.toLocaleString()}
+                </td>
+
+                <td>
+
+                    <button
+                        class="btn btn-danger btn-small admin-only"
+                        onclick="deleteFinance(${i})"
+                    >
+                        Futa
+                    </button>
+
+                </td>
+
+            </tr>
+
+            `;
+
+        }
+    );
+
+    document.getElementById(
+        "financeIncome"
+    ).innerText=
+        "Tsh "+
+        income.toLocaleString();
+
+    document.getElementById(
+        "financeExpense"
+    ).innerText=
+        "Tsh "+
+        expense.toLocaleString();
+
+    applyRolePermissions();
+
+}
+
+function deleteFinance(i){
+
+    if(!requireAdmin())
+        return;
+
+    if(confirm(
+        "Futa rekodi hii ya fedha?"
+    )){
+
+        finances.splice(i,1);
+
+        saveAll();
+
+        refresh();
+
+    }
+
+}
+
+/* =========================================================
+DEBTS
+========================================================= */
+
+function saveDebt(e){
+
+    if(!requireAdmin())
+        return;
+
+    e.preventDefault();
+
+    let owed=
+        Number(
+            document.getElementById(
+                "dOwed"
+            ).value
+        );
+
+    let paid=
+        Number(
+            document.getElementById(
+                "dPaid"
+            ).value
+        );
+
+    debts.push({
+
+        id:Date.now(),
+
+        name:
+            document.getElementById(
+                "dName"
+            ).value,
+
+        owed:owed,
+
+        paid:paid,
+
+        date:
+            document.getElementById(
+                "dDate"
+            ).value,
+
+        balance:
+            Math.max(
+                0,
+                owed-paid
+            )
+
+    });
+
+    saveAll();
+
+    e.target.reset();
+
+    closeModal(
+        "debtModal"
+    );
+
+    refresh();
+
+}
+
+function renderDebts(){
+
+    let tbody=
+        document.getElementById(
+            "debtTable"
+        );
+
+    tbody.innerHTML="";
+
+    let totalDebt=0;
+
+    debts.forEach(
+        (d,i)=>{
+
+            totalDebt+=d.balance;
+
+            tbody.innerHTML+=`
+
+            <tr>
+
+                <td>${d.name}</td>
+
+                <td>
+                    Tsh ${d.owed.toLocaleString()}
+                </td>
+
+                <td>
+                    Tsh ${d.paid.toLocaleString()}
+                </td>
+
+                <td>
+                    ${d.date || "-"}
+                </td>
+
+                <td>
+                    <b>
+                        Tsh ${d.balance.toLocaleString()}
+                    </b>
+                </td>
+
+                <td>
+
+                    <button
+                        class="btn btn-danger btn-small admin-only"
+                        onclick="deleteDebt(${i})"
+                    >
+                        Futa
+                    </button>
+
+                </td>
+
+            </tr>
+
+            `;
+
+        }
+    );
+
+    document.getElementById(
+        "totalDebt"
+    ).innerText=
+        "Tsh "+
+        totalDebt.toLocaleString();
+
+    applyRolePermissions();
+
+}
+
+function deleteDebt(i){
+
+    if(!requireAdmin())
+        return;
+
+    if(confirm(
+        "Futa dai hili?"
+    )){
+
+        debts.splice(i,1);
+
+        saveAll();
+
+        refresh();
+
+    }
+
+}
+
+/* =========================================================
+INFRASTRUCTURE
+========================================================= */
+
+function saveInfrastructure(e){
+
+    if(!requireAdmin())
+        return;
+
+    e.preventDefault();
+
+    infrastructure={
+
+        classrooms:Number(
+            document.getElementById(
+                "infraClassrooms"
+            ).value
+        ),
+
+        desks:Number(
+            document.getElementById(
+                "infraDesks"
+            ).value
+        ),
+
+        tables:Number(
+            document.getElementById(
+                "infraTables"
+            ).value
+        ),
+
+        chairs:Number(
+            document.getElementById(
+                "infraChairs"
+            ).value
+        ),
+
+        houses:Number(
+            document.getElementById(
+                "infraHouses"
+            ).value
+        ),
+
+        studentMale:Number(
+            document.getElementById(
+                "toiletStudentMale"
+            ).value
+        ),
+
+        studentFemale:Number(
+            document.getElementById(
+                "toiletStudentFemale"
+            ).value
+        ),
+
+        teacherMale:Number(
+            document.getElementById(
+                "toiletTeacherMale"
+            ).value
+        ),
+
+        teacherFemale:Number(
+            document.getElementById(
+                "toiletTeacherFemale"
+            ).value
+        )
+
+    };
+
+    saveAll();
+
+    closeModal(
+        "infrastructureModal"
+    );
+
+    refresh();
+
+}
+
+function renderInfrastructure(){
+
+    let tbody=
+        document.getElementById(
+            "infrastructureTable"
+        );
+
+    tbody.innerHTML=`
+
+        <tr>
+            <td>Madarasa</td>
+            <td>${infrastructure.classrooms}</td>
+        </tr>
+
+        <tr>
+            <td>Madawati</td>
+            <td>${infrastructure.desks}</td>
+        </tr>
+
+        <tr>
+            <td>Meza</td>
+            <td>${infrastructure.tables}</td>
+        </tr>
+
+        <tr>
+            <td>Viti</td>
+            <td>${infrastructure.chairs}</td>
+        </tr>
+
+        <tr>
+            <td>Nyumba za Walimu</td>
+            <td>${infrastructure.houses}</td>
+        </tr>
+
+    `;
+
+    document.getElementById(
+        "toiletTable"
+    ).innerHTML=`
+
+        <tr>
+
+            <td>Wanafunzi</td>
+
+            <td>
+                ${infrastructure.studentMale}
+            </td>
+
+            <td>
+                ${infrastructure.studentFemale}
+            </td>
+
+            <td>
+                ${
+                    infrastructure.studentMale+
+                    infrastructure.studentFemale
+                }
+            </td>
+
+        </tr>
+
+        <tr>
+
+            <td>Walimu</td>
+
+            <td>
+                ${infrastructure.teacherMale}
+            </td>
+
+            <td>
+                ${infrastructure.teacherFemale}
+            </td>
+
+            <td>
+                ${
+                    infrastructure.teacherMale+
+                    infrastructure.teacherFemale
+                }
+            </td>
+
+        </tr>
+
+    `;
+
+}
+
+/* =========================================================
+ATTENDANCE
+========================================================= */
+
+function saveAttendance(e){
+
+    if(!requireAdmin())
+        return;
+
+    e.preventDefault();
+
+    let p=
+        Number(
+            document.getElementById(
+                "aPresent"
+            ).value
+        );
+
+    let a=
+        Number(
+            document.getElementById(
+                "aAbsent"
+            ).value
+        );
+
+    let total=p+a;
+
+    let percentage=
+        total>0
+        ? ((p/total)*100).toFixed(1)
+        : 0;
+
+    attendance.push({
+
+        id:Date.now(),
+
+        date:
+            document.getElementById(
+                "aDate"
+            ).value,
+
+        className:
+            document.getElementById(
+                "aClass"
+            ).value,
+
+        present:p,
+
+        absent:a,
+
+        percentage:percentage
+
+    });
+
+    saveAll();
+
+    e.target.reset();
+
+    closeModal(
+        "attendanceModal"
+    );
+
+    refresh();
+
+}
+
+function renderAttendance(){
+
+    let tbody=
+        document.getElementById(
+            "attendanceTable"
+        );
+
+    tbody.innerHTML="";
+
+    attendance.forEach(
+        (a,i)=>{
+
+            tbody.innerHTML+=`
+
+            <tr>
+
+                <td>${a.date}</td>
+
+                <td>${a.className}</td>
+
+                <td>${a.present}</td>
+
+                <td>${a.absent}</td>
+
+                <td>${a.percentage}%</td>
+
+                <td>
+
+                    <button
+                        class="btn btn-danger btn-small admin-only"
+                        onclick="deleteAttendance(${i})"
+                    >
+                        Futa
+                    </button>
+
+                </td>
+
+            </tr>
+
+            `;
+
+        }
+    );
+
+    applyRolePermissions();
+
+}
+
+function deleteAttendance(i){
+
+    if(!requireAdmin())
+        return;
+
+    if(confirm(
+        "Futa rekodi hii ya mahudhurio?"
+    )){
+
+        attendance.splice(i,1);
+
+        saveAll();
+
+        refresh();
+
+    }
+
+}
+
+/* =========================================================
+GRADE
+========================================================= */
+
+function getGrade(avg){
+
+    avg=Number(avg)||0;
+
+    if(avg>=41 && avg<=50)
+        return "A";
+
+    if(avg>=31 && avg<41)
+        return "B";
+
+    if(avg>=21 && avg<31)
+        return "C";
+
+    if(avg>=11 && avg<21)
+        return "D";
+
+    return "E";
+
+}
+
+/* =========================================================
+AVERAGE
+========================================================= */
+
+function calculateAverage(values){
+
+    let validValues=
+        values
+        .map(v=>Number(v))
+        .filter(v=>!isNaN(v));
+
+    if(validValues.length===0)
+        return 0;
+
+    let total=
+        validValues.reduce(
+            (sum,v)=>sum+v,
+            0
+        );
+
+    return total/
+        validValues.length;
+
+}
+
+/* =========================================================
+RESULT TEMPLATE
+========================================================= */
+
+function buildResultTemplate(){
+
+    let cls=
+        document.getElementById(
+            "resultClassSelect"
+        ).value;
+
+    let area=
+        document.getElementById(
+            "resultTemplateArea"
+        );
+
+    if(!cls){
+
+        area.innerHTML=
+            "<p>Chagua darasa kwanza.</p>";
+
+        return;
+
+    }
+
+    let subs=
+        getSubjectsForClass(cls);
+
+    if(subs.length===0){
+
+        area.innerHTML=`
+
+        <div class="notice">
+
+            ⚠️ Hakuna masomo yaliyosajiliwa
+            kwa Darasa ${cls}.
+
+            <br><br>
+
+            Nenda kwenye <b>MASOMO</b>
+            kisha ongeza somo.
+
+        </div>
+
+        `;
+
+        return;
+
+    }
+
+    let headers=
+        subs
+        .map(
+            s=>`<th>${s}</th>`
+        )
+        .join("");
+
+    let inputs=
+        subs
+        .map(
+            s=>`
+
+            <td>
+
+                <input
+                    type="number"
+                    min="0"
+                    max="50"
+                    class="markInput"
+                    data-subject="${s}"
+                    placeholder="0-50"
+                    oninput="calculateLiveResult()"
+                >
+
+            </td>
+
+            `
+        )
+        .join("");
+
+    area.innerHTML=`
+
+    <div class="panel">
+
+        <h3>
+            Kuingiza Matokeo — Darasa ${cls}
+        </h3>
+
+        <br>
+
+        <div class="table-wrap">
+
+            <table>
+
+                <thead>
+
+                    <tr>
+
+                        <th>Jina</th>
+                        <th>Jinsia</th>
+
+                        ${headers}
+
+                        <th>Wastani</th>
+                        <th>Daraja</th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    <tr>
+
+                        <td>
+
+                            <input
+                                id="templateStudentName2"
+                                placeholder="Jina la mwanafunzi"
+                            >
+
+                        </td>
+
+                        <td>
+
+                            <select
+                                id="templateGender2"
+                            >
+
+                                <option>Me</option>
+                                <option>Ke</option>
+
+                            </select>
+
+                        </td>
+
+                        ${inputs}
+
+                        <td id="templateAverage">
+                            0.00
+                        </td>
+
+                        <td id="templateGrade">
+                            -
+                        </td>
+
+                    </tr>
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+        <br>
+
+        <button
+            class="btn btn-success admin-only"
+            onclick="saveTemplateResult('${cls}')"
+        >
+            💾 Hifadhi Matokeo
+        </button>
+
+    </div>
+
+    `;
+
+    applyRolePermissions();
+
+}
+
+/* =========================================================
+LIVE RESULT
+========================================================= */
+
+function calculateLiveResult(){
+
+    let inputs=
+        document.querySelectorAll(
+            ".markInput"
+        );
+
+    let values=[];
+
+    inputs.forEach(input=>{
+
+        if(input.value!=="")
+            values.push(
+                Number(input.value)
+            );
+
+    });
+
+    let average=
+        calculateAverage(values);
+
+    let grade=
+        values.length
+        ? getGrade(average)
+        : "-";
+
+    let avgElement=
+        document.getElementById(
+            "templateAverage"
+        );
+
+    let gradeElement=
+        document.getElementById(
+            "templateGrade"
+        );
+
+    if(avgElement)
+        avgElement.innerText=
+            average.toFixed(2);
+
+    if(gradeElement){
+
+        gradeElement.innerText=
+            grade;
+
+        gradeElement.className=
+            grade!=="-"
+            ? "grade-"+grade
+            : "";
+
+    }
+
+}
+
+/* =========================================================
+SAVE RESULT
+========================================================= */
+
+function saveTemplateResult(cls){
+
+    if(!requireAdmin())
+        return;
+
+    let name=
+        document.getElementById(
+            "templateStudentName2"
+        )
+        .value
+        .trim();
+
+    let gender=
+        document.getElementById(
+            "templateGender2"
+        ).value;
+
+    if(!name){
+
+        alert(
+            "Andika jina la mwanafunzi."
+        );
+
+        return;
+
+    }
+
+    let inputs=
+        document.querySelectorAll(
+            ".markInput"
+        );
+
+    let subjectsData={};
+
+    let values=[];
+
+    let valid=true;
+
+    inputs.forEach(input=>{
+
+        let raw=
+            input.value;
+
+        let value=
+            raw===""
+            ? 0
+            : Number(raw);
+
+        if(
+            value<0 ||
+            value>50
+        ){
+
+            valid=false;
+
+        }
+
+        subjectsData[
+            input.dataset.subject
+        ]=value;
+
+        values.push(value);
+
+    });
+
+    if(!valid){
+
+        alert(
+            "Alama lazima ziwe kati ya 0 na 50."
+        );
+
+        return;
+
+    }
+
+    let average=
+        calculateAverage(values);
+
+    let grade=
+        getGrade(average);
+
+    resultRecords.push({
+
+        id:
+            Date.now()+
+            Math.random(),
+
+        name:name,
+
+        gender:gender,
+
+        className:cls,
+
+        subjects:subjectsData,
+
+        average:
+            Number(
+                average.toFixed(2)
+            ),
+
+        grade:grade
+
+    });
+
+    saveAll();
+
+    alert(
+        "Matokeo yamehifadhiwa.\n\n"+
+        "Wastani: "+
+        average.toFixed(2)+
+        "\nDaraja: "+
+        grade
+    );
+
+    document.getElementById(
+        "templateStudentName2"
+    ).value="";
+
+    inputs.forEach(
+        input=>input.value=""
+    );
+
+    calculateLiveResult();
+
+    renderResultRecords();
+
+}
+
+/* =========================================================
+RANKING
+========================================================= */
+
+function getRankedResults(cls){
+
+    let records=
+        resultRecords
+        .filter(
+            r=>r.className===cls
+        )
+        .map(r=>{
+
+            let average=
+                Number(r.average)||0;
+
+            return{
+
+                ...r,
+
+                average:average,
+
+                grade:
+                    getGrade(
+                        average
+                    )
+
+            };
+
+        });
+
+    records.sort(
+        (a,b)=>{
+
+            if(
+                b.average!==
+                a.average
+            ){
+
+                return(
+                    b.average-
+                    a.average
+                );
+
+            }
+
+            return a.name.localeCompare(
+                b.name
+            );
+
+        }
+    );
+
+    let previousAverage=null;
+
+    let previousRank=0;
+
+    records.forEach(
+        (r,index)=>{
+
+            if(
+                previousAverage===null ||
+                r.average!==previousAverage
+            ){
+
+                previousRank=
+                    index+1;
+
+                previousAverage=
+                    r.average;
+
+            }
+
+            r.position=
+                previousRank;
+
+        }
+    );
+
+    return records;
+
+}
+
+/* =========================================================
+RENDER RESULTS
+========================================================= */
+
+function renderResultRecords(){
+
+    let select=
+        document.getElementById(
+            "resultViewClass"
+        );
+
+    let cls=
+        select.value;
+
+    if(!cls){
+
+        let mainSelect=
+            document.getElementById(
+                "resultClassSelect"
+            );
+
+        if(mainSelect)
+            cls=mainSelect.value;
+
+    }
+
+    let head=
+        document.getElementById(
+            "resultRecordsHead"
+        );
+
+    let body=
+        document.getElementById(
+            "resultRecordsBody"
+        );
+
+    let summary=
+        document.getElementById(
+            "resultSummary"
+        );
+
+    head.innerHTML="";
+
+    body.innerHTML="";
+
+    summary.innerHTML="";
+
+    if(!cls){
+
+        head.innerHTML=`
+
+        <tr>
+            <th>Chagua Darasa</th>
+        </tr>
+
+        `;
+
+        return;
+
+    }
+
+    if(select.value!==cls)
+        select.value=cls;
+
+    let subs=
+        getSubjectsForClass(cls);
+
+    let records=
+        getRankedResults(cls);
+
+    if(records.length===0){
+
+        head.innerHTML=`
+
+        <tr>
+            <th>Hakuna Matokeo</th>
+        </tr>
+
+        `;
+
+        summary.innerHTML=`
+
+        <div class="notice">
+
+            Hakuna mwanafunzi mwenye
+            matokeo kwa Darasa ${cls}.
+
+        </div>
+
+        `;
+
+        return;
+
+    }
+
+    let header=`
+
+        <th>Nafasi</th>
+        <th>Jina la Mwanafunzi</th>
+        <th>Jinsia</th>
+
+    `;
+
+    subs.forEach(
+        s=>{
+            header+=
+                `<th>${s}</th>`;
+        }
+    );
+
+    header+=`
+
+        <th>Wastani</th>
+        <th>Daraja</th>
+        <th>Kitendo</th>
+
+    `;
+
+    head.innerHTML=
+        `<tr>${header}</tr>`;
+
+    records.forEach(r=>{
+
+        let row=`
+
+            <td class="position">
+                ${r.position}
+            </td>
+
+            <td>
+                <b>${r.name}</b>
+            </td>
+
+            <td>${r.gender}</td>
+
+        `;
+
+        subs.forEach(s=>{
+
+            let value=
+                r.subjects &&
+                r.subjects[s]!==undefined
+                ? r.subjects[s]
+                : "";
+
+            row+=
+                `<td>${value}</td>`;
+
+        });
+
+        row+=`
+
+            <td>
+                <b>
+                    ${Number(
+                        r.average
+                    ).toFixed(2)}
+                </b>
+            </td>
+
+            <td
+                class="grade-${r.grade}"
+            >
+                ${r.grade}
+            </td>
+
+            <td>
+
+                <button
+                    class="btn btn-danger btn-small admin-only"
+                    onclick="deleteResult('${r.id}')"
+                >
+                    🗑️ Futa
+                </button>
+
+            </td>
+
+        `;
+
+        body.innerHTML+=
+            `<tr>${row}</tr>`;
+
+    });
+
+    summary.innerHTML=`
+
+        <div class="cards">
+
+            <div class="card">
+
+                <h3>WANAFUNZI</h3>
+
+                <strong>
+                    ${records.length}
+                </strong>
+
+            </div>
+
+            <div class="card">
+
+                <h3>NAFASI YA KWANZA</h3>
+
+                <strong>
+                    ${records[0].name}
+                </strong>
+
+            </div>
+
+            <div class="card">
+
+                <h3>WASTANI WA JUU</h3>
+
+                <strong>
+                    ${Number(
+                        records[0].average
+                    ).toFixed(2)}
+                </strong>
+
+            </div>
+
+        </div>
+
+    `;
+
+    applyRolePermissions();
+
+}
+
+/* =========================================================
+DELETE RESULT
+========================================================= */
+
+function deleteResult(id){
+
+    if(!requireAdmin())
+        return;
+
+    let student=
+        resultRecords.find(
+            r=>
+            String(r.id)===
+            String(id)
+        );
+
+    if(!student)
+        return;
+
+    if(confirm(
+        "Una uhakika unataka kufuta "+
+        "matokeo ya "+
+        student.name+
+        "?"
+    )){
+
+        resultRecords=
+            resultRecords.filter(
+                r=>
+                String(r.id)!==
+                String(id)
+            );
+
+        saveAll();
+
+        renderResultRecords();
+
+    }
+
+}
+
+/* =========================================================
+DELETE ALL RESULTS
+========================================================= */
+
+function deleteAllClassResults(){
+
+    if(!requireAdmin())
+        return;
+
+    let cls=
+        document.getElementById(
+            "resultViewClass"
+        ).value ||
+        document.getElementById(
+            "resultClassSelect"
+        ).value;
+
+    if(!cls){
+
+        alert(
+            "Chagua darasa kwanza."
+        );
+
+        return;
+
+    }
+
+    let count=
+        resultRecords.filter(
+            r=>r.className===cls
+        ).length;
+
+    if(count===0){
+
+        alert(
+            "Hakuna matokeo ya kufuta."
+        );
+
+        return;
+
+    }
+
+    if(confirm(
+        "Una uhakika unataka kufuta "+
+        "wanafunzi wote "+
+        count+
+        " wa Darasa "+
+        cls+
+        "?"
+    )){
+
+        resultRecords=
+            resultRecords.filter(
+                r=>r.className!==cls
+            );
+
+        saveAll();
+
+        renderResultRecords();
+
+    }
+
+}
+
+/* =========================================================
+EXCEL TEMPLATE
+========================================================= */
+
+function downloadResultTemplate(){
+
+    if(!requireAdmin())
+        return;
+
+    let cls=
+        document.getElementById(
+            "resultClassSelect"
+        ).value;
+
+    if(!cls){
+
+        alert(
+            "Chagua darasa kwanza."
+        );
+
+        return;
+
+    }
+
+    let subs=
+        getSubjectsForClass(cls);
+
+    if(subs.length===0){
+
+        alert(
+            "Sajili masomo kwanza."
+        );
+
+        return;
+
+    }
+
+    let header=[
+
+        "Nafasi",
+
+        "Jina la Mwanafunzi",
+
+        "Jinsia",
+
+        ...subs,
+
+        "Wastani",
+
+        "Daraja"
+
+    ];
+
+    let rows=[header];
+
+    for(let i=1;i<=100;i++){
+
+        let row=[
+
+            i,
+
+            "",
+
+            "Me"
+
+        ];
+
+        subs.forEach(
+            ()=>row.push("")
+        );
+
+        let firstSubjectCol=4;
+
+        let lastSubjectCol=
+            firstSubjectCol+
+            subs.length-1;
+
+        let averageCol=
+            lastSubjectCol+1;
+
+        let gradeCol=
+            averageCol+1;
+
+        let firstLetter=
+            XLSX.utils.encode_col(
+                firstSubjectCol-1
+            );
+
+        let lastLetter=
+            XLSX.utils.encode_col(
+                lastSubjectCol-1
+            );
+
+        let averageLetter=
+            XLSX.utils.encode_col(
+                averageCol-1
+            );
+
+        let gradeLetter=
+            XLSX.utils.encode_col(
+                gradeCol-1
+            );
+
+        let excelRow=i+1;
+
+        row.push({
+
+            f:
+            `=IF(COUNTA(${firstLetter}${excelRow}:${lastLetter}${excelRow})=0,"",AVERAGE(${firstLetter}${excelRow}:${lastLetter}${excelRow}))`
+
+        });
+
+        row.push({
+
+            f:
+            `=IF(${averageLetter}${excelRow}="","",IF(${averageLetter}${excelRow}>=41,"A",IF(${averageLetter}${excelRow}>=31,"B",IF(${averageLetter}${excelRow}>=21,"C",IF(${averageLetter}${excelRow}>=11,"D","E")))))`
+
+        });
+
+        rows.push(row);
+
+    }
+
+    let ws=
+        XLSX.utils.aoa_to_sheet(
+            rows
+        );
+
+    let wb=
+        XLSX.utils.book_new();
+
+    XLSX.utils.book_append_sheet(
+        wb,
+        ws,
+        "Matokeo"
+    );
+
+    ws["!cols"]=[
+
+        {wch:10},
+        {wch:28},
+        {wch:12},
+
+        ...subs.map(
+            ()=>({wch:14})
+        ),
+
+        {wch:12},
+        {wch:10}
+
+    ];
+
+    XLSX.writeFile(
+        wb,
+        `HILLU_Matokeo_Darasa_${cls}.xlsx`
+    );
+
+}
+
+/* =========================================================
+UPLOAD EXCEL
+========================================================= */
+
+function uploadResultsExcel(event){
+
+    if(!requireAdmin())
+        return;
+
+    let file=
+        event.target.files[0];
+
+    if(!file)
+        return;
+
+    let cls=
+        document.getElementById(
+            "resultClassSelect"
+        ).value;
+
+    if(!cls){
+
+        alert(
+            "Chagua darasa kabla ya upload."
+        );
+
+        event.target.value="";
+
+        return;
+
+    }
+
+    let subs=
+        getSubjectsForClass(cls);
+
+    if(subs.length===0){
+
+        alert(
+            "Hakuna masomo yaliyosajiliwa."
+        );
+
+        event.target.value="";
+
+        return;
+
+    }
+
+    let reader=
+        new FileReader();
+
+    reader.onload=function(e){
+
+        try{
+
+            let data=
+                new Uint8Array(
+                    e.target.result
+                );
+
+            let workbook=
+                XLSX.read(
+                    data,
+                    {type:"array"}
+                );
+
+            let sheet=
+                workbook.Sheets[
+                    workbook.SheetNames[0]
+                ];
+
+            let rows=
+                XLSX.utils.sheet_to_json(
+                    sheet,
+                    {defval:""}
+                );
+
+            let imported=0;
+
+            let skipped=0;
+
+            rows.forEach(row=>{
+
+                let name=
+                    String(
+                        row[
+                            "Jina la Mwanafunzi"
+                        ] || ""
+                    ).trim();
+
+                if(!name){
+
+                    skipped++;
+
+                    return;
+
+                }
+
+                let gender=
+                    String(
+                        row["Jinsia"] ||
+                        "Me"
+                    ).trim();
+
+                let subjectsData={};
+
+                let values=[];
+
+                let valid=true;
+
+                subs.forEach(sub=>{
+
+                    let raw=row[sub];
+
+                    let value=
+                        raw==="" ||
+                        raw===undefined ||
+                        raw===null
+                        ? 0
+                        : Number(raw);
+
+                    if(
+                        isNaN(value) ||
+                        value<0 ||
+                        value>50
+                    ){
+
+                        valid=false;
+
+                    }
+
+                    subjectsData[sub]=
+                        value;
+
+                    values.push(value);
+
+                });
+
+                if(!valid){
+
+                    skipped++;
+
+                    return;
+
+                }
+
+                let average=
+                    calculateAverage(
+                        values
+                    );
+
+                let grade=
+                    getGrade(
+                        average
+                    );
+
+                resultRecords.push({
+
+                    id:
+                        Date.now()+
+                        Math.random(),
+
+                    name:name,
+
+                    gender:gender,
+
+                    className:cls,
+
+                    subjects:
+                        subjectsData,
+
+                    average:
+                        Number(
+                            average.toFixed(2)
+                        ),
+
+                    grade:grade
+
+                });
+
+                imported++;
+
+            });
+
+            saveAll();
+
+            renderResultRecords();
+
+            event.target.value="";
+
+            alert(
+
+                imported+
+                " mwanafunzi wameingizwa.\n\n"+
+                skipped+
+                " mistari imeachwa."
+
+            );
+
+        }catch(error){
+
+            console.error(error);
+
+            alert(
+                "Excel haikuweza kusomwa."
+            );
+
+            event.target.value="";
+
+        }
+
+    };
+
+    reader.readAsArrayBuffer(file);
+
+}
+
+/* =========================================================
+ASSESSMENT
+========================================================= */
+
+function fillYears(){
+
+    let selects=[
+
+        document.getElementById(
+            "assessmentYear"
+        ),
+
+        document.getElementById(
+            "assYear"
+        )
+
+    ];
+
+    selects.forEach(select=>{
+
+        if(!select)
+            return;
+
+        select.innerHTML="";
+
+        for(
+            let y=2022;
+            y<=2035;
+            y++
+        ){
+
+            select.innerHTML+=
+                `<option>${y}</option>`;
+
+        }
+
+    });
+
+}
+
+function saveAssessment(e){
+
+    if(!requireAdmin())
+        return;
+
+    e.preventDefault();
+
+    let year=
+        Number(
+            document.getElementById(
+                "assYear"
+            ).value
+        );
+
+    let cls=
+        document.getElementById(
+            "assClass"
+        ).value;
+
+    let gender=
+        document.getElementById(
+            "assGender"
+        ).value;
+
+    assessments.push({
+
+        id:Date.now(),
+
+        year,
+
+        className:cls,
+
+        gender,
+
+        A:Number(
+            document.getElementById(
+                "assA"
+            ).value
+        ),
+
+        B:Number(
+            document.getElementById(
+                "assB"
+            ).value
+        ),
+
+        C:Number(
+            document.getElementById(
+                "assC"
+            ).value
+        ),
+
+        D:Number(
+            document.getElementById(
+                "assD"
+            ).value
+        ),
+
+        E:Number(
+            document.getElementById(
+                "assE"
+            ).value
+        )
+
+    });
+
+    saveAll();
+
+    e.target.reset();
+
+    closeModal(
+        "assessmentModal"
+    );
+
+    renderAssessments();
+
+}
+
+function renderAssessments(){
+
+    let year=
+        Number(
+            document.getElementById(
+                "assessmentYear"
+            ).value
+        );
+
+    let cls=
+        document.getElementById(
+            "assessmentClass"
+        ).value;
+
+    let tbody=
+        document.getElementById(
+            "assessmentTable"
+        );
+
+    tbody.innerHTML="";
+
+    ["Me","Ke"].forEach(
+        gender=>{
+
+            let d=
+                assessments.find(
+                    x=>
+                    x.year===year &&
+                    x.className===cls &&
+                    x.gender===gender
+                );
+
+            if(!d){
+
+                d={
+                    A:0,
+                    B:0,
+                    C:0,
+                    D:0,
+                    E:0
+                };
+
+            }
+
+            let total=
+                d.A+
+                d.B+
+                d.C+
+                d.D+
+                d.E;
+
+            tbody.innerHTML+=`
+
+            <tr>
+
+                <td>
+                    <b>${gender}</b>
+                </td>
+
+                <td>${d.A}</td>
+                <td>${d.B}</td>
+                <td>${d.C}</td>
+                <td>${d.D}</td>
+                <td>${d.E}</td>
+
+                <td>
+                    <b>${total}</b>
+                </td>
+
+            </tr>
+
+            `;
+
+        }
+    );
+
+}
+
+/* =========================================================
+PUBLISH
+========================================================= */
+
+function publishResult(e){
+
+    if(!requireAdmin())
+        return;
+
+    e.preventDefault();
+
+    publishedResults.push({
+
+        id:Date.now(),
+
+        className:
+            document.getElementById(
+                "pubClass"
+            ).value,
+
+        year:
+            document.getElementById(
+                "pubYear"
+            ).value,
+
+        date:
+            document.getElementById(
+                "pubDate"
+            ).value,
+
+        status:
+            "IMETANGAZWA"
+
+    });
+
+    saveAll();
+
+    e.target.reset();
+
+    closeModal(
+        "publishResultModal"
+    );
+
+    refresh();
+
+    alert(
+        "Matokeo yametangazwa."
+    );
+
+}
+
+function renderPublishedResults(){
+
+    let tbody=
+        document.getElementById(
+            "publishedResultsTable"
+        );
+
+    tbody.innerHTML="";
+
+    publishedResults.forEach(
+        (p,i)=>{
+
+            tbody.innerHTML+=`
+
+            <tr>
+
+                <td>${p.className}</td>
+
+                <td>${p.year}</td>
+
+                <td>${p.date}</td>
+
+                <td>
+
+                    <span class="badge">
+                        ${p.status}
+                    </span>
+
+                </td>
+
+                <td>
+
+                    <button
+                        class="btn btn-danger btn-small admin-only"
+                        onclick="deletePublished(${i})"
+                    >
+                        Futa
+                    </button>
+
+                </td>
+
+            </tr>
+
+            `;
+
+        }
+    );
+
+    applyRolePermissions();
+
+}
+
+function deletePublished(i){
+
+    if(!requireAdmin())
+        return;
+
+    if(confirm(
+        "Futa tangazo hili?"
+    )){
+
+        publishedResults.splice(
+            i,
+            1
+        );
+
+        saveAll();
+
+        refresh();
+
+    }
+
+}
+
+/* =========================================================
+NEWS
+========================================================= */
+
+function renderNews(){
+
+    let filter=
+        document.getElementById(
+            "newsClassFilter"
+        ).value;
+
+    let box=
+        document.getElementById(
+            "newsResults"
+        );
+
+    box.innerHTML="";
+
+    let data=
+        publishedResults.filter(
+            p=>
+            !filter ||
+            p.className==="Madarsa Yote" ||
+            p.className===filter
+        );
+
+    if(data.length===0){
+
+        box.innerHTML=`
+
+        <div class="notice">
+
+            Hakuna matokeo
+            yaliyotangazwa kwa sasa.
+
+        </div>
+
+        `;
+
+        return;
+
+    }
+
+    data.forEach(p=>{
+
+        box.innerHTML+=`
+
+        <div class="result-news-card">
+
+            <h3>
+                🔴 MATOKEO YAMETANGAZWA
+            </h3>
+
+            <p>
+                <b>Darasa:</b>
+                ${p.className}
+            </p>
+
+            <p>
+                <b>Mwaka:</b>
+                ${p.year}
+            </p>
+
+            <p>
+                <b>Tarehe:</b>
+                ${p.date}
+            </p>
+
+            <button
+                class="btn btn-success"
+                onclick="openPublishedResults('${p.className}')"
+            >
+                👁️ Fungua Matokeo
+            </button>
+
+        </div>
+
+        `;
+
+    });
+
+}
+
+/* =========================================================
+PUBLISHED RESULTS
+========================================================= */
+
+function openPublishedResults(cls){
+
+    let records=
+        getRankedResults(cls);
+
+    if(records.length===0){
+
+        alert(
+            "Hakuna matokeo yaliyowekwa."
+        );
+
+        return;
+
+    }
+
+    let allSubjects=
+        new Set();
+
+    records.forEach(r=>{
+
+        Object.keys(
+            r.subjects || {}
+        ).forEach(
+            s=>
+            allSubjects.add(s)
+        );
+
+    });
+
+    let html=`
+
+    <html>
+
+    <head>
+
+        <title>HILLU Results</title>
+
+        <style>
+
+            body{
+                font-family:Arial;
+                padding:25px;
+            }
+
+            h1,h2{
+                text-align:center;
+                color:#063b66;
+            }
+
+            table{
+                width:100%;
+                border-collapse:collapse;
+                margin-top:20px;
+            }
+
+            th,td{
+                border:1px solid #777;
+                padding:8px;
+                text-align:center;
+            }
+
+            th{
+                background:#063b66;
+                color:white;
+            }
+
+        </style>
+
+    </head>
+
+    <body>
+
+        <h1>HILLU PRIMARY SCHOOL</h1>
+
+        <h2>
+            MATOKEO YA WANAFUNZI — ${cls}
+        </h2>
+
+        <table>
+
+            <tr>
+
+                <th>Nafasi</th>
+                <th>Jina</th>
+                <th>Jinsia</th>
+
+    `;
+
+    allSubjects.forEach(
+        s=>{
+            html+=
+                `<th>${s}</th>`;
+        }
+    );
+
+    html+=`
+
+                <th>Wastani</th>
+                <th>Daraja</th>
+
+            </tr>
+
+    `;
+
+    records.forEach(r=>{
+
+        html+=`
+
+            <tr>
+
+                <td>
+                    <b>${r.position}</b>
+                </td>
+
+                <td>${r.name}</td>
+
+                <td>${r.gender}</td>
+
+        `;
+
+        allSubjects.forEach(s=>{
+
+            html+=`
+
+                <td>
+                    ${r.subjects[s] ?? ""}
+                </td>
+
+            `;
+
+        });
+
+        html+=`
+
+                <td>
+                    ${Number(
+                        r.average
+                    ).toFixed(2)}
+                </td>
+
+                <td>
+                    <b>${r.grade}</b>
+                </td>
+
+            </tr>
+
+        `;
+
+    });
+
+    html+=`
+
+        </table>
+
+    </body>
+
+    </html>
+
+    `;
+
+    let win=
+        window.open(
+            "",
+            "_blank"
+        );
+
+    win.document.write(html);
+
+    win.document.close();
+
+}
+
+/* =========================================================
+DASHBOARD
+========================================================= */
+
+function updateDashboard(){
+
+    let totalStudents=0;
+
+    Object.values(
+        studentCounts
+    )
+    .forEach(d=>{
+
+        totalStudents+=
+            Number(d.male||0)+
+            Number(d.female||0);
+
+    });
+
+    document.getElementById(
+        "dashStudents"
+    ).innerText=
+        totalStudents;
+
+    document.getElementById(
+        "dashTeachers"
+    ).innerText=
+        teachers.male+
+        teachers.female;
+
+    let income=0;
+
+    let expense=0;
+
+    finances.forEach(f=>{
+
+        if(f.type==="INGIZO")
+            income+=f.amount;
+
+        if(f.type==="MATUMIZI")
+            expense+=f.amount;
+
+    });
+
+    document.getElementById(
+        "dashIncome"
+    ).innerText=
+        "Tsh "+
+        income.toLocaleString();
+
+    document.getElementById(
+        "dashExpense"
+    ).innerText=
+        "Tsh "+
+        expense.toLocaleString();
+
+    document.getElementById(
+        "dashBalance"
+    ).innerText=
+        "Tsh "+
+        (
+            income-
+            expense
+        ).toLocaleString();
+
+    document.getElementById(
+        "reportStudents"
+    ).innerText=
+        totalStudents;
+
+    document.getElementById(
+        "reportTeachers"
+    ).innerText=
+        teachers.male+
+        teachers.female;
+
+    document.getElementById(
+        "reportFinance"
+    ).innerText=
+        "Tsh "+
+        income.toLocaleString();
+
+}
+
+/* =========================================================
+DASHBOARD NEWS
+========================================================= */
+
+function renderDashboardNews(){
+
+    let box=
+        document.getElementById(
+            "dashboardNews"
+        );
+
+    let latest=
+        publishedResults[
+            publishedResults.length-1
+        ];
+
+    if(!latest){
+
+        box.innerHTML="";
+
+        document.getElementById(
+            "latestNews"
+        ).innerHTML=
+            "<div class='notice'>Hakuna taarifa mpya kwa sasa.</div>";
+
+        return;
+
+    }
+
+    box.innerHTML=`
+
+        <div
+            class="news-banner"
+            onclick="showPageByName('news')"
+        >
+
+            <marquee
+                behavior="scroll"
+                direction="left"
+                scrollamount="7"
+            >
+
+                🔴 NEWS MPYA:
+                MATOKEO YA DARASA
+                ${latest.className}
+                YA MWAKA
+                ${latest.year}
+                YAMETANGAZWA —
+                BOFYA HAPA KUYAFUNGUA.
+
+            </marquee>
+
+        </div>
+
+    `;
+
+    document.getElementById(
+        "latestNews"
+    ).innerHTML=`
+
+        <div class="notice">
+
+            <b>🔴 NEWS MPYA</b>
+
+            <br><br>
+
+            Matokeo ya Darasa
+            <b>${latest.className}</b>
+            yamekwisha tangazwa.
+
+            <br><br>
+
+            <button
+                class="btn btn-danger"
+                onclick="showPageByName('news')"
+            >
+                Fungua News
+            </button>
+
+        </div>
+
+    `;
+
+}
+
+function showPageByName(id){
+
+    document
+        .querySelectorAll(".page")
+        .forEach(
+            p=>
+            p.classList.remove("active")
+        );
+
+    document
+        .getElementById(id)
+        .classList.add("active");
+
+    renderNews();
+
+}
+
+/* =========================================================
+REPORTS
+========================================================= */
+
+function printStudentReport(){
+
+    let html=`
+
+        <h1>HILLU PRIMARY SCHOOL</h1>
+
+        <h2>TAKWIMU ZA WANAFUNZI</h2>
+
+        <table>
+
+            <tr>
+
+                <th>Darasa</th>
+                <th>Me</th>
+                <th>Ke</th>
+                <th>Jumla</th>
+
+            </tr>
+
+    `;
+
+    classes.forEach(cls=>{
+
+        let d=
+            studentCounts[cls] ||
+            {
+                male:0,
+                female:0
+            };
+
+        html+=`
+
+            <tr>
+
+                <td>${cls}</td>
+
+                <td>${d.male}</td>
+
+                <td>${d.female}</td>
+
+                <td>
+                    ${d.male+d.female}
+                </td>
+
+            </tr>
+
+        `;
+
+    });
+
+    html+=
+        `</table>`;
+
+    printWindow(html);
+
+}
+
+function printTeacherReport(){
+
+    let html=`
+
+        <h1>HILLU PRIMARY SCHOOL</h1>
+
+        <h2>TAKWIMU ZA WALIMU</h2>
+
+        <table>
+
+            <tr>
+
+                <th>Me</th>
+                <th>Ke</th>
+                <th>Jumla</th>
+
+            </tr>
+
+            <tr>
+
+                <td>
+                    ${teachers.male}
+                </td>
+
+                <td>
+                    ${teachers.female}
+                </td>
+
+                <td>
+                    ${
+                        teachers.male+
+                        teachers.female
+                    }
+                </td>
+
+            </tr>
+
+        </table>
+
+    `;
+
+    printWindow(html);
+
+}
+
+function printFinanceReport(){
+
+    let html=`
+
+        <h1>HILLU PRIMARY SCHOOL</h1>
+
+        <h2>RIPOTI YA FEDHA</h2>
+
+        <table>
+
+            <tr>
+
+                <th>Tarehe</th>
+                <th>Maelezo</th>
+                <th>Aina</th>
+                <th>Kiasi</th>
+
+            </tr>
+
+    `;
+
+    finances.forEach(f=>{
+
+        html+=`
+
+            <tr>
+
+                <td>${f.date}</td>
+
+                <td>${f.description}</td>
+
+                <td>${f.type}</td>
+
+                <td>
+                    Tsh ${f.amount.toLocaleString()}
+                </td>
+
+            </tr>
+
+        `;
+
+    });
+
+    html+=
+        `</table>`;
+
+    printWindow(html);
+
+}
+
+function printWindow(content){
+
+    let win=
+        window.open(
+            "",
+            "_blank"
+        );
+
+    win.document.write(`
+
+        <html>
+
+        <head>
+
+            <title>HILLU Report</title>
+
+            <style>
+
+                body{
+                    font-family:Arial;
+                    padding:30px;
+                }
+
+                h1,h2{
+                    text-align:center;
+                }
+
+                table{
+                    width:100%;
+                    border-collapse:collapse;
+                    margin-top:25px;
+                }
+
+                th,td{
+                    border:1px solid #555;
+                    padding:8px;
+                }
+
+                th{
+                    background:#063b66;
+                    color:white;
+                }
+
+            </style>
+
+        </head>
+
+        <body>
+
+            ${content}
+
+            <br><br>
+
+            <p>
+                <b>
+                    HILLU PRIMARY SCHOOL —
+                    KAZI NA SARA
+                </b>
+            </p>
+
+        </body>
+
+        </html>
+
+    `);
+
+    win.document.close();
+
+    win.print();
+
+}
+
+/* =========================================================
+SUPABASE CLOUD STORAGE / DATABASE
+=========================================================
+
+Kabla ya kutumia sehemu hii, tengeneza table Supabase:
+
+CREATE TABLE school_data (
+    id bigint generated by default as identity primary key,
+    data_key text unique not null,
+    data_value jsonb not null,
+    updated_at timestamptz default now()
+);
+
+Kisha unaweza kuweka RLS policies kulingana na mfumo wako.
+
+========================================================= */
+
+async function saveToSupabase(){
+
+    if(!supabaseClient)
+        return false;
+
+    if(!isAdmin())
+        return false;
+
+    try{
+
+        const records={
+
+            studentCounts,
+            specialNeeds,
+            subjects,
+            teachers,
+            headteachers,
+            finances,
+            debts,
+            attendance,
+            assessments,
+            publishedResults,
+            resultRecords,
+            bankAmount,
+            infrastructure
+
+        };
+
+        for(
+            const [key,value]
+            of Object.entries(records)
+        ){
+
+            const {error}=
+                await supabaseClient
+                .from("school_data")
+                .upsert({
+
+                    data_key:key,
+
+                    data_value:value,
+
+                    updated_at:
+                        new Date().toISOString()
+
+                },{
+                    onConflict:"data_key"
+                });
+
+            if(error)
+                throw error;
+
+        }
+
+        updateCloudStatus();
+
+        return true;
+
+    }catch(error){
+
+        console.error(
+            "Supabase save error:",
+            error
+        );
+
+        return false;
+
+    }
+
+}
+
+/* =========================================================
+LOAD FROM SUPABASE
+========================================================= */
+
+async function loadFromSupabase(){
+
+    if(!supabaseClient){
+
+        updateCloudStatus();
+
+        return;
+
+    }
+
+    try{
+
+        const {data,error}=
+            await supabaseClient
+            .from("school_data")
+            .select(
+                "data_key,data_value"
+            );
+
+        if(error)
+            throw error;
+
+        if(data && data.length){
+
+            data.forEach(row=>{
+
+                switch(row.data_key){
+
+                    case "studentCounts":
+                        studentCounts=
+                            row.data_value || {};
+                        break;
+
+                    case "specialNeeds":
+                        specialNeeds=
+                            row.data_value || [];
+                        break;
+
+                    case "subjects":
+                        subjects=
+                            row.data_value || [];
+                        break;
+
+                    case "teachers":
+                        teachers=
+                            row.data_value ||
+                            {
+                                male:0,
+                                female:0
+                            };
+                        break;
+
+                    case "headteachers":
+                        headteachers=
+                            row.data_value || [];
+                        break;
+
+                    case "finances":
+                        finances=
+                            row.data_value || [];
+                        break;
+
+                    case "debts":
+                        debts=
+                            row.data_value || [];
+                        break;
+
+                    case "attendance":
+                        attendance=
+                            row.data_value || [];
+                        break;
+
+                    case "assessments":
+                        assessments=
+                            row.data_value || [];
+                        break;
+
+                    case "publishedResults":
+                        publishedResults=
+                            row.data_value || [];
+                        break;
+
+                    case "resultRecords":
+                        resultRecords=
+                            row.data_value || [];
+                        break;
+
+                    case "bankAmount":
+                        bankAmount=
+                            Number(
+                                row.data_value || 0
+                            );
+                        break;
+
+                    case "infrastructure":
+                        infrastructure=
+                            row.data_value ||
+                            infrastructure;
+                        break;
+
+                }
+
+            });
+
+            saveLocalOnly();
+
+            refresh();
+
+        }
+
+        updateCloudStatus();
+
+    }catch(error){
+
+        console.error(
+            "Supabase load error:",
+            error
+        );
+
+        updateCloudStatus();
+
+    }
+
+}
+
+/* =========================================================
+SAVE LOCAL ONLY
+========================================================= */
+
+function saveLocalOnly(){
+
+    localStorage.setItem(
+        "hillu_student_counts",
+        JSON.stringify(studentCounts)
+    );
+
+    localStorage.setItem(
+        "hillu_special_needs",
+        JSON.stringify(specialNeeds)
+    );
+
+    localStorage.setItem(
+        "hillu_subjects",
+        JSON.stringify(subjects)
+    );
+
+    localStorage.setItem(
+        "hillu_teachers_count",
+        JSON.stringify(teachers)
+    );
+
+    localStorage.setItem(
+        "hillu_headteachers",
+        JSON.stringify(headteachers)
+    );
+
+    localStorage.setItem(
+        "hillu_finances",
+        JSON.stringify(finances)
+    );
+
+    localStorage.setItem(
+        "hillu_debts",
+        JSON.stringify(debts)
+    );
+
+    localStorage.setItem(
+        "hillu_attendance",
+        JSON.stringify(attendance)
+    );
+
+    localStorage.setItem(
+        "hillu_assessments",
+        JSON.stringify(assessments)
+    );
+
+    localStorage.setItem(
+        "hillu_published_results",
+        JSON.stringify(publishedResults)
+    );
+
+    localStorage.setItem(
+        "hillu_results",
+        JSON.stringify(resultRecords)
+    );
+
+    localStorage.setItem(
+        "hillu_bank",
+        bankAmount
+    );
+
+    localStorage.setItem(
+        "hillu_infrastructure",
+        JSON.stringify(infrastructure)
+    );
+
+}
+
+/* =========================================================
+ORIGINAL SAVE + CLOUD SAVE
+========================================================= */
+
+const originalSaveAll=saveAll;
+
+saveAll=function(){
+
+    if(!isAdmin())
+        return;
+
+    originalSaveAll();
+
+    if(supabaseClient){
+
+        saveToSupabase();
+
+    }
+
+};
+
+/* =========================================================
+REFRESH
+========================================================= */
+
+function refresh(){
+
+    renderStudents();
+
+    renderSubjects();
+
+    renderTeachers();
+
+    renderBank();
+
+    renderFinance();
+
+    renderDebts();
+
+    renderInfrastructure();
+
+    renderAttendance();
+
+    renderAssessments();
+
+    renderPublishedResults();
+
+    renderNews();
+
+    renderDashboardNews();
+
+    updateDashboard();
+
+    updateCloudStatus();
+
+    let resultView=
+        document.getElementById(
+            "resultViewClass"
+        );
+
+    if(
+        resultView &&
+        resultView.value
+    ){
+
+        renderResultRecords();
+
+    }
+
+    applyRolePermissions();
+
+}
+
+/* =========================================================
+INITIALIZE
+========================================================= */
+
+fillYears();
+
+refresh();
+
+restoreLogin();
+
+applyRolePermissions();
+
+updateCloudStatus();
+
+/*
+Kama Supabase imewekwa,
+pakia taarifa zilizopo online.
+*/
+
+if(supabaseClient){
+
+    loadFromSupabase();
+
+}
+
+</script>
+
+</body>
+</html>
